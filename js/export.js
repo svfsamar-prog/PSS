@@ -43,13 +43,14 @@ export function exportToCSV(curriculum, state, customTasks = []) {
   // Include custom tasks
   if (Array.isArray(customTasks)) {
     customTasks.forEach(task => {
+      const isDone = !!(task.is_completed !== undefined ? task.is_completed : task.done);
       rows.push([
-        `Sem ${task.sem}`,
-        "Custom Tasks",
+        `Sem ${task.semester || task.sem}`,
+        "Custom Goals",
         "Custom",
         task.title,
-        task.done ? "Completed" : "Pending",
-        task.at || (task.done ? "Yes" : "")
+        isDone ? "Completed" : "Pending",
+        task.completed_at || task.at || (isDone ? "Yes" : "")
       ]);
     });
   }

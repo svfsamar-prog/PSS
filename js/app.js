@@ -2,6 +2,8 @@
  * Placement OS Application Logic
  * Personal Academic + Placement Roadmap & Career OS
  * Candidate: Samar Raj · BCA (Data Science / AI-ML)
+ * Backend: Supabase Cloud Database (Project PSS - sesshjrjyscnnjufypdf)
+ * ZERO LocalStorage for all curriculum, goals, applications, and metrics!
  */
 
 import {
@@ -11,20 +13,11 @@ import {
   SKILLS_MATRIX,
   PROJECTS_SPEC,
   TODAY_FOCUS_TEMPLATES,
-  INITIAL_CAREER_APPLICATIONS,
   STUDY_HOURS_TARGET
 } from "./data.js";
 
-import { exportToCSV, exportToPDF, exportBackupJSON, importBackupJSON } from "./export.js";
-
-// Storage Keys
-const STORAGE_KEY_STATE = "placement-tracker-v2";
-const STORAGE_KEY_CUSTOM = "placement-custom-tasks-v2";
-const STORAGE_KEY_METRICS = "placement-os-metrics-v1";
-const STORAGE_KEY_APPLICATIONS = "placement-os-applications-v1";
-const STORAGE_KEY_FOCUS = "placement-os-daily-focus-v1";
-const STORAGE_KEY_THEME = "placement-theme";
-const LEGACY_KEY_V1 = "placement-ledger-v1";
+import { db } from "./supabase.js";
+import { exportToCSV, exportToPDF, exportBackupJSON } from "./export.js";
 
 class PlacementOSApp {
   constructor() {
@@ -32,160 +25,94 @@ class PlacementOSApp {
     this.skillsMatrix = SKILLS_MATRIX;
     this.projectsSpec = PROJECTS_SPEC;
     this.activeSemIndex = 0; // 0 = Sem 3, 1 = Sem 4, 2 = Sem 5, 3 = Sem 6
-    this.activeView = "dashboard"; // dashboard | roadmap | skills | projects | practice | career | analytics | rhythm | targets | export
+    this.activeView = "dashboard";
 
-    this.state = this.loadState();
-    this.customTasks = this.loadCustomTasks();
-    this.metrics = this.loadMetrics();
-    this.applications = this.loadApplications();
-    this.dailyFocusState = this.loadDailyFocusState();
+    // Supabase State (Live Cloud Memory)
+    this.profile = null;
+    this.taskState = {}; // id -> { is_completed, completed_at }
+    this.customGoals = [];
+    this.applications = [];
+    this.dailyTasks = [];
+    this.studyHours = {};
+    this.isLoading = true;
 
-    this.initTheme();
     this.initDOM();
     this.bindEvents();
-    this.render();
+    this.loadFromSupabase();
   }
 
   /* ==========================================================================
-     Storage & Persistence
+     Supabase Data Synchronization
      ========================================================================== */
-  loadState() {
+  async loadFromSupabase() {
+    this.setSyncStatus("syncing", "Connecting to Supabase...");
     try {
-      const saved = localStorage.getItem(STORAGE_KEY_STATE);
-      if (saved) return JSON.parse(saved);
+      const [profileData, tasksData, goalsData, appsData, dailyData, studyData] = await Promise.all([
+        db.getProfile(),
+        db.getCurriculumTasks(),
+        db.getCustomGoals(),
+        db.getCareerApplications(),
+        db.getDailyFocusTasks(),
+        db.getStudyHoursLog()
+      ]);
 
-      const legacy = localStorage.getItem(LEGACY_KEY_V1);
-      if (legacy) {
-        const parsedLegacy = JSON.parse(legacy);
-        const migrated = {};
-        for (const [key, val] of Object.entries(parsedLegacy)) {
-          if (val) {
-            migrated[key] = { done: true, at: new Date().toISOString().slice(0, 10) };
-          }
-        }
-        localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify(migrated));
-        return migrated;
+      this.profile = profileData || {
+        dsa_solved: 42,
+        sql_solved: 68,
+        internships_done: 0,
+        certifications_done: 2
+      };
+
+      // Map tasks
+      this.taskState = {};
+      if (tasksData) {
+        tasksData.forEach(t => {
+          this.taskState[t.id] = {
+            done: t.is_completed,
+            at: t.completed_at
+          };
+        });
       }
-    } catch (e) {
-      console.error("Failed to load task state:", e);
-    }
-    return {};
-  }
 
-  saveState() {
-    try {
-      localStorage.setItem(STORAGE_KEY_STATE, JSON.stringify(this.state));
-    } catch (e) {}
-  }
+      this.customGoals = goalsData || [];
+      this.applications = appsData || [];
+      this.dailyTasks = dailyData || [];
 
-  loadCustomTasks() {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_CUSTOM);
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
-  }
-
-  saveCustomTasks() {
-    try {
-      localStorage.setItem(STORAGE_KEY_CUSTOM, JSON.stringify(this.customTasks));
-    } catch (e) {}
-  }
-
-  loadMetrics() {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_METRICS);
-      if (saved) return JSON.parse(saved);
-    } catch (e) {}
-    // Default starting placement benchmarks
-    return {
-      dsaSolved: 42,
-      sqlSolved: 68,
-      internshipsDone: 0,
-      certificationsDone: 2,
-      studyHours: {
-        Mon: 2.0,
-        Tue: 2.5,
-        Wed: 2.0,
-        Thu: 2.5,
-        Fri: 2.0,
-        Sat: 4.0,
-        Sun: 3.5
+      this.studyHours = {};
+      if (studyData) {
+        studyData.forEach(s => {
+          this.studyHours[s.day_code] = parseFloat(s.logged_hours) || 0;
+        });
       }
-    };
-  }
 
-  saveMetrics() {
-    try {
-      localStorage.setItem(STORAGE_KEY_METRICS, JSON.stringify(this.metrics));
-    } catch (e) {}
-  }
-
-  loadApplications() {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_APPLICATIONS);
-      if (saved) return JSON.parse(saved);
-    } catch (e) {}
-    return INITIAL_CAREER_APPLICATIONS;
-  }
-
-  saveApplications() {
-    try {
-      localStorage.setItem(STORAGE_KEY_APPLICATIONS, JSON.stringify(this.applications));
-    } catch (e) {}
-  }
-
-  loadDailyFocusState() {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_FOCUS);
-      if (saved) return JSON.parse(saved);
-    } catch (e) {}
-    return {
-      checks: {},
-      customItems: []
-    };
-  }
-
-  saveDailyFocusState() {
-    try {
-      localStorage.setItem(STORAGE_KEY_FOCUS, JSON.stringify(this.dailyFocusState));
-    } catch (e) {}
-  }
-
-  /* ==========================================================================
-     Theme Management
-     ========================================================================== */
-  initTheme() {
-    const savedTheme = localStorage.getItem(STORAGE_KEY_THEME);
-    if (savedTheme) {
-      document.documentElement.setAttribute("data-theme", savedTheme);
+      this.isLoading = false;
+      this.setSyncStatus("connected", "Supabase Cloud: PSS (Connected)");
+      this.render();
+    } catch (err) {
+      console.error("Supabase load error:", err);
+      this.setSyncStatus("error", "Supabase sync error - Retrying...");
+      this.isLoading = false;
+      this.render();
     }
-    this.updateThemeIcon();
   }
 
-  toggleTheme() {
-    const current = document.documentElement.getAttribute("data-theme");
-    const systemDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    let nextTheme = "dark";
+  setSyncStatus(status, text) {
+    const el = document.getElementById("cloudSyncBadge");
+    if (!el) return;
 
-    if (current === "dark") nextTheme = "light";
-    else if (current === "light") nextTheme = "dark";
-    else nextTheme = systemDark ? "light" : "dark";
-
-    document.documentElement.setAttribute("data-theme", nextTheme);
-    localStorage.setItem(STORAGE_KEY_THEME, nextTheme);
-    this.updateThemeIcon();
-    this.showToast(`Switched to ${nextTheme} mode`);
-  }
-
-  updateThemeIcon() {
-    const themeBtn = document.getElementById("themeToggleBtn");
-    if (!themeBtn) return;
-    const isDark = document.documentElement.getAttribute("data-theme") === "dark" ||
-      (!document.documentElement.getAttribute("data-theme") && window.matchMedia("(prefers-color-scheme: dark)").matches);
-    themeBtn.innerHTML = isDark ? "☀️" : "🌙";
-    themeBtn.setAttribute("title", isDark ? "Switch to light mode" : "Switch to dark mode");
+    if (status === "syncing") {
+      el.innerHTML = `<span style="color:#F59E0B;">🔄</span> <span>${text}</span>`;
+      el.style.borderColor = "var(--warn-line)";
+      el.style.backgroundColor = "var(--warn-bg)";
+    } else if (status === "connected") {
+      el.innerHTML = `<span style="color:var(--accent-green);">🟢</span> <span>${text}</span>`;
+      el.style.borderColor = "var(--line)";
+      el.style.backgroundColor = "var(--bg-page)";
+    } else {
+      el.innerHTML = `<span style="color:#EF4444;">🔴</span> <span>${text}</span>`;
+      el.style.borderColor = "#FCA5A5";
+      el.style.backgroundColor = "#FEF2F2";
+    }
   }
 
   /* ==========================================================================
@@ -211,15 +138,20 @@ class PlacementOSApp {
   }
 
   bindEvents() {
-    // Theme toggle
-    this.dom.themeToggleBtn?.addEventListener("click", () => this.toggleTheme());
-
     // Navigation (Sidebar + Top bar + Mobile bottom bar)
     document.querySelectorAll("[data-nav-view]").forEach(btn => {
       btn.addEventListener("click", (e) => {
         const view = e.currentTarget.getAttribute("data-nav-view");
         this.switchView(view);
       });
+    });
+
+    // Theme toggle
+    this.dom.themeToggleBtn?.addEventListener("click", () => {
+      const current = document.documentElement.getAttribute("data-theme");
+      const nextTheme = current === "dark" ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", nextTheme);
+      this.dom.themeToggleBtn.innerHTML = nextTheme === "dark" ? "☀️" : "🌙";
     });
 
     // Sidebar Focus CTA
@@ -256,21 +188,25 @@ class PlacementOSApp {
      Calculations & Metrics
      ========================================================================== */
   isTaskDone(id) {
-    const val = this.state[id];
-    if (!val) return false;
-    return typeof val === "object" ? val.done : !!val;
+    const val = this.taskState[id];
+    return val ? !!val.done : false;
   }
 
-  setTaskDone(id, isDone) {
-    if (isDone) {
-      this.state[id] = {
-        done: true,
-        at: new Date().toISOString().slice(0, 10)
-      };
-    } else {
-      delete this.state[id];
+  async toggleTaskDone(id, isDone) {
+    this.taskState[id] = {
+      done: isDone,
+      at: isDone ? new Date().toISOString().slice(0, 10) : null
+    };
+
+    this.updateSidebarFocus();
+    this.setSyncStatus("syncing", "Saving to Supabase...");
+
+    try {
+      await db.setTaskStatus(id, isDone);
+      this.setSyncStatus("connected", "Supabase Cloud: PSS (Synced)");
+    } catch (err) {
+      this.setSyncStatus("error", "Failed to save task to Supabase");
     }
-    this.saveState();
   }
 
   calculateStats() {
@@ -293,12 +229,12 @@ class PlacementOSApp {
         });
       });
 
-      // Factor in custom tasks for this semester
-      const semCustom = this.customTasks.filter(t => t.sem === semData.sem);
+      // Factor in custom goals for this semester
+      const semCustom = this.customGoals.filter(t => t.semester === semData.sem);
       semCustom.forEach(t => {
         semTot++;
         totalAll++;
-        if (t.done) {
+        if (t.is_completed) {
           semDone++;
           doneAll++;
         }
@@ -310,7 +246,7 @@ class PlacementOSApp {
 
     const overallPct = totalAll ? Math.round((doneAll / totalAll) * 100) : 0;
 
-    // Project completion calculations (Project 1: Sem 3, Project 2: Sem 4, Project 3: Sem 5)
+    // Project completion calculations
     const projectStats = [0, 1, 2].map(semIdx => {
       const sem = this.curriculum[semIdx];
       const projSec = sem.sections.find(s => s.isProject);
@@ -339,7 +275,6 @@ class PlacementOSApp {
   switchView(viewName) {
     this.activeView = viewName;
 
-    // Update active state in all navigation bars
     document.querySelectorAll("[data-nav-view]").forEach(btn => {
       const isTarget = btn.getAttribute("data-nav-view") === viewName;
       btn.classList.toggle("active", isTarget);
@@ -350,6 +285,17 @@ class PlacementOSApp {
   }
 
   render() {
+    if (this.isLoading) {
+      this.dom.mainContainer.innerHTML = `
+        <div style="text-align:center; padding:5rem 2rem;">
+          <div style="font-size:2.5rem; margin-bottom:1rem; animation: pulse 1.5s infinite;">☁️</div>
+          <h2 style="font-family:var(--font-serif); font-size:1.5rem; margin-bottom:0.5rem;">Connecting to Supabase Database...</h2>
+          <p style="color:var(--ink-secondary); font-size:0.9rem;">Fetching live tables from project <code>PSS</code> (PostgreSQL 17)</p>
+        </div>
+      `;
+      return;
+    }
+
     this.updateSidebarFocus();
 
     switch (this.activeView) {
@@ -410,9 +356,12 @@ class PlacementOSApp {
 
     const dayIdx = new Date().getDay();
     const todayPlan = TODAY_FOCUS_TEMPLATES[dayIdx] || TODAY_FOCUS_TEMPLATES[1];
-
-    // Compute Project #1 completion
     const p1Stat = stats.projectStats[0];
+
+    const dsaSolved = this.profile?.dsa_solved ?? 42;
+    const sqlSolved = this.profile?.sql_solved ?? 68;
+    const internDone = this.profile?.internships_done ?? 0;
+    const certDone = this.profile?.certifications_done ?? 2;
 
     const html = `
       <!-- Welcome Hero -->
@@ -450,7 +399,7 @@ class PlacementOSApp {
         </button>
       </div>
 
-      <!-- 6-Card Placement Readiness KPI Grid -->
+      <!-- 6-Card Placement Readiness KPI Grid (Backed by Supabase) -->
       <div class="readiness-kpis">
         <div class="readiness-kpi-card" id="kpiOverallCard" style="cursor:pointer;">
           <div class="kpi-label">Overall Roadmap</div>
@@ -466,9 +415,9 @@ class PlacementOSApp {
 
         <div class="readiness-kpi-card">
           <div class="kpi-label">DSA Solved</div>
-          <div class="kpi-val">${this.metrics.dsaSolved} <span style="font-size:0.95rem; color:var(--ink-muted);">/ 150</span></div>
+          <div class="kpi-val">${dsaSolved} <span style="font-size:0.95rem; color:var(--ink-muted);">/ 150</span></div>
           <div class="kpi-bar">
-            <div class="kpi-bar-fill" style="width: ${Math.min(100, Math.round((this.metrics.dsaSolved / 150) * 100))}%;"></div>
+            <div class="kpi-bar-fill" style="width: ${Math.min(100, Math.round((dsaSolved / 150) * 100))}%;"></div>
           </div>
           <div class="kpi-meta">
             <span>Target: 150 problems</span>
@@ -478,9 +427,9 @@ class PlacementOSApp {
 
         <div class="readiness-kpi-card">
           <div class="kpi-label">SQL Solved</div>
-          <div class="kpi-val">${this.metrics.sqlSolved} <span style="font-size:0.95rem; color:var(--ink-muted);">/ 150</span></div>
+          <div class="kpi-val">${sqlSolved} <span style="font-size:0.95rem; color:var(--ink-muted);">/ 150</span></div>
           <div class="kpi-bar">
-            <div class="kpi-bar-fill" style="width: ${Math.min(100, Math.round((this.metrics.sqlSolved / 150) * 100))}%;"></div>
+            <div class="kpi-bar-fill" style="width: ${Math.min(100, Math.round((sqlSolved / 150) * 100))}%;"></div>
           </div>
           <div class="kpi-meta">
             <span>Target: 150 problems</span>
@@ -502,9 +451,9 @@ class PlacementOSApp {
 
         <div class="readiness-kpi-card" id="kpiInternshipsCard" style="cursor:pointer;">
           <div class="kpi-label">Internships</div>
-          <div class="kpi-val">${this.metrics.internshipsDone} <span style="font-size:0.95rem; color:var(--ink-muted);">/ 2</span></div>
+          <div class="kpi-val">${internDone} <span style="font-size:0.95rem; color:var(--ink-muted);">/ 2</span></div>
           <div class="kpi-bar">
-            <div class="kpi-bar-fill" style="width: ${(this.metrics.internshipsDone / 2) * 100}%;"></div>
+            <div class="kpi-bar-fill" style="width: ${(internDone / 2) * 100}%;"></div>
           </div>
           <div class="kpi-meta">
             <span>Target: 1-2 by Sem 5</span>
@@ -514,9 +463,9 @@ class PlacementOSApp {
 
         <div class="readiness-kpi-card">
           <div class="kpi-label">Certifications</div>
-          <div class="kpi-val">${this.metrics.certificationsDone} <span style="font-size:0.95rem; color:var(--ink-muted);">/ 4</span></div>
+          <div class="kpi-val">${certDone} <span style="font-size:0.95rem; color:var(--ink-muted);">/ 4</span></div>
           <div class="kpi-bar">
-            <div class="kpi-bar-fill" style="width: ${(this.metrics.certificationsDone / 4) * 100}%;"></div>
+            <div class="kpi-bar-fill" style="width: ${(certDone / 4) * 100}%;"></div>
           </div>
           <div class="kpi-meta">
             <span>Google Cloud + Kaggle</span>
@@ -585,15 +534,14 @@ class PlacementOSApp {
                 </div>
                 <div class="section-subtitle">${todayPlan.rhythm} · ${todayPlan.theme}</div>
               </div>
-              <button class="btn-subtle" id="refreshDailyTasksBtn">Reset Day</button>
             </div>
 
-            <div class="focus-tasks-list" id="focusTasksContainer">
+            <div class="focus-tasks-list">
               ${this.renderTodayFocusTasksHtml(todayPlan)}
             </div>
 
             <div class="focus-task-add">
-              <input type="text" id="newFocusTaskInput" placeholder="Add custom today's focus task (e.g. Solve 2 trees)...">
+              <input type="text" id="newFocusTaskInput" placeholder="Add custom today focus task to Supabase...">
               <button class="btn-primary" id="addFocusTaskBtn">+</button>
             </div>
           </div>
@@ -672,7 +620,7 @@ class PlacementOSApp {
                 }).join("")}
               </table>
               <div style="margin-top:0.75rem; font-size:0.76rem; color:var(--ink-muted); text-align:center;">
-                ≈ 15–17 focused hours/week. Consistency compounds exponentially.
+                ≈ 15–17 focused hours/week. Direct Supabase cloud persistence.
               </div>
             </div>
           </div>
@@ -685,14 +633,14 @@ class PlacementOSApp {
   }
 
   renderTodayFocusTasksHtml(todayPlan) {
-    const checks = this.dailyFocusState.checks;
     let html = "";
 
     todayPlan.tasks.forEach((t, i) => {
       const taskId = `plan-${todayPlan.name}-${i}`;
-      const isChecked = !!checks[taskId];
+      const dbTask = this.dailyTasks.find(dt => dt.id === taskId);
+      const isChecked = dbTask ? dbTask.is_completed : false;
       html += `
-        <div class="focus-task-item ${isChecked ? 'checked' : ''}" data-task-id="${taskId}">
+        <div class="focus-task-item ${isChecked ? 'checked' : ''}" data-focus-id="${taskId}">
           <div class="focus-checkbox-circle"></div>
           <div class="focus-task-content">
             <div class="focus-task-header">
@@ -704,18 +652,16 @@ class PlacementOSApp {
       `;
     });
 
-    // Custom items added for today
-    this.dailyFocusState.customItems.forEach((cItem, i) => {
-      const taskId = `custom-${i}`;
-      const isChecked = !!checks[taskId];
+    // Custom items in Supabase
+    this.dailyTasks.filter(dt => dt.is_custom).forEach(dt => {
       html += `
-        <div class="focus-task-item ${isChecked ? 'checked' : ''}" data-task-id="${taskId}">
+        <div class="focus-task-item ${dt.is_completed ? 'checked' : ''}" data-focus-id="${dt.id}">
           <div class="focus-checkbox-circle"></div>
           <div class="focus-task-content">
             <div class="focus-task-header">
-              <span class="focus-task-tag" style="background:var(--accent-green-soft); color:var(--accent-green);">Custom</span>
+              <span class="focus-task-tag" style="background:var(--accent-green-soft); color:var(--accent-green);">${dt.task_tag || 'Custom'}</span>
             </div>
-            <div class="focus-task-text">${cItem.text}</div>
+            <div class="focus-task-text">${dt.task_text}</div>
           </div>
         </div>
       `;
@@ -767,7 +713,6 @@ class PlacementOSApp {
   }
 
   bindDashboardEvents() {
-    // Buttons
     document.getElementById("dashViewRoadmapBtn")?.addEventListener("click", () => this.switchView("roadmap"));
     document.getElementById("dashContinueRoadmapBtn")?.addEventListener("click", () => {
       this.activeSemIndex = 0;
@@ -790,90 +735,99 @@ class PlacementOSApp {
       });
     });
 
-    // Quick counters
-    document.getElementById("quickDsaPlusBtn")?.addEventListener("click", (e) => {
+    // Quick counters with Supabase write
+    document.getElementById("quickDsaPlusBtn")?.addEventListener("click", async (e) => {
       e.stopPropagation();
-      this.metrics.dsaSolved++;
-      this.saveMetrics();
+      this.profile.dsa_solved = (this.profile.dsa_solved || 42) + 1;
       this.render();
-      this.showToast("DSA problem count updated: " + this.metrics.dsaSolved);
+      await db.updateProfile(this.profile.id, { dsa_solved: this.profile.dsa_solved });
+      this.showToast("Saved to Supabase: DSA = " + this.profile.dsa_solved);
     });
 
-    document.getElementById("quickSqlPlusBtn")?.addEventListener("click", (e) => {
+    document.getElementById("quickSqlPlusBtn")?.addEventListener("click", async (e) => {
       e.stopPropagation();
-      this.metrics.sqlSolved++;
-      this.saveMetrics();
+      this.profile.sql_solved = (this.profile.sql_solved || 68) + 1;
       this.render();
-      this.showToast("SQL problem count updated: " + this.metrics.sqlSolved);
+      await db.updateProfile(this.profile.id, { sql_solved: this.profile.sql_solved });
+      this.showToast("Saved to Supabase: SQL = " + this.profile.sql_solved);
     });
 
-    document.getElementById("quickInternPlusBtn")?.addEventListener("click", (e) => {
+    document.getElementById("quickInternPlusBtn")?.addEventListener("click", async (e) => {
       e.stopPropagation();
-      if (this.metrics.internshipsDone < 2) {
-        this.metrics.internshipsDone++;
-        this.saveMetrics();
+      if ((this.profile.internships_done || 0) < 2) {
+        this.profile.internships_done = (this.profile.internships_done || 0) + 1;
         this.render();
-        this.showToast("Internships updated: " + this.metrics.internshipsDone);
+        await db.updateProfile(this.profile.id, { internships_done: this.profile.internships_done });
+        this.showToast("Saved to Supabase: Internships = " + this.profile.internships_done);
       }
     });
 
-    document.getElementById("quickCertPlusBtn")?.addEventListener("click", (e) => {
+    document.getElementById("quickCertPlusBtn")?.addEventListener("click", async (e) => {
       e.stopPropagation();
-      if (this.metrics.certificationsDone < 4) {
-        this.metrics.certificationsDone++;
-        this.saveMetrics();
+      if ((this.profile.certifications_done || 0) < 4) {
+        this.profile.certifications_done = (this.profile.certifications_done || 0) + 1;
         this.render();
-        this.showToast("Certifications updated: " + this.metrics.certificationsDone);
+        await db.updateProfile(this.profile.id, { certifications_done: this.profile.certifications_done });
+        this.showToast("Saved to Supabase: Certifications = " + this.profile.certifications_done);
       }
     });
 
     // Today Focus Toggles
-    document.querySelectorAll(".focus-task-item").forEach(item => {
-      item.addEventListener("click", (e) => {
-        const taskId = item.getAttribute("data-task-id");
-        const current = !!this.dailyFocusState.checks[taskId];
-        this.dailyFocusState.checks[taskId] = !current;
-        this.saveDailyFocusState();
-        this.render();
+    document.querySelectorAll("[data-focus-id]").forEach(item => {
+      item.addEventListener("click", async () => {
+        const id = item.getAttribute("data-focus-id");
+        const existing = this.dailyTasks.find(dt => dt.id === id);
+        const newStatus = existing ? !existing.is_completed : true;
+
+        if (existing) {
+          existing.is_completed = newStatus;
+        } else {
+          this.dailyTasks.push({ id, is_completed: newStatus, is_custom: false });
+        }
+
+        item.classList.toggle("checked", newStatus);
+        this.setSyncStatus("syncing", "Saving task to Supabase...");
+        await db.setDailyFocusTaskStatus(id, newStatus);
+        this.setSyncStatus("connected", "Supabase Cloud: PSS (Synced)");
       });
     });
 
-    // Add custom today task
+    // Add custom today task to Supabase
     const addFocusBtn = document.getElementById("addFocusTaskBtn");
     const focusInput = document.getElementById("newFocusTaskInput");
-    const handleAddFocus = () => {
+    const handleAddFocus = async () => {
       const text = focusInput.value.trim();
       if (!text) return;
-      this.dailyFocusState.customItems.push({ text, at: new Date().toISOString() });
-      this.saveDailyFocusState();
       focusInput.value = "";
+      this.setSyncStatus("syncing", "Saving custom task to Supabase...");
+
+      const newTask = {
+        id: `focus-${Date.now()}`,
+        tag: "Custom",
+        text
+      };
+      await db.addDailyFocusTask(newTask);
+      this.dailyTasks.push({ id: newTask.id, task_tag: "Custom", task_text: text, is_completed: false, is_custom: true });
       this.render();
-      this.showToast("Added to today's focus!");
+      this.showToast("Saved to Supabase database!");
     };
 
     addFocusBtn?.addEventListener("click", handleAddFocus);
     focusInput?.addEventListener("keydown", (e) => {
       if (e.key === "Enter") handleAddFocus();
     });
-
-    // Reset daily focus
-    document.getElementById("refreshDailyTasksBtn")?.addEventListener("click", () => {
-      if (confirm("Reset today's checks?")) {
-        this.dailyFocusState = { checks: {}, customItems: [] };
-        this.saveDailyFocusState();
-        this.render();
-        this.showToast("Daily plan reset");
-      }
-    });
   }
 
   /* ==========================================================================
-     VIEW 2: ROADMAP (Modular, No Wall of Checkboxes)
+     VIEW 2: ROADMAP (Modular, No Checkbox Wall)
      ========================================================================== */
   renderRoadmapView() {
     const sem = this.curriculum[this.activeSemIndex];
     const stats = this.calculateStats();
     const semStat = stats.semStats[this.activeSemIndex];
+
+    const dsaSolved = this.profile?.dsa_solved ?? 42;
+    const sqlSolved = this.profile?.sql_solved ?? 68;
 
     const html = `
       <div class="roadmap-container">
@@ -885,7 +839,7 @@ class PlacementOSApp {
               Targeted academic & placement curriculum milestones for Samar Raj
             </div>
           </div>
-          <button class="btn-primary" id="openAddTaskRoadmapBtn">＋ Add Custom Goal</button>
+          <button class="btn-primary" id="openAddTaskRoadmapBtn">＋ Add Goal to Supabase</button>
         </div>
 
         <!-- Semester Selector Tabs -->
@@ -917,7 +871,7 @@ class PlacementOSApp {
 
         <!-- Modular Roadmap Decomposition -->
         <div class="roadmap-modules-grid">
-          <!-- Left Column: Skill Modules & Topics with Accordions -->
+          <!-- Left Column: Skill Modules with Drawers -->
           <div>
             <div class="card" style="margin-bottom:1.4rem;">
               <div class="section-title-wrap">
@@ -931,6 +885,9 @@ class PlacementOSApp {
                 ${this.renderSkillModulesHtml(sem, this.activeSemIndex)}
               </div>
             </div>
+
+            <!-- Custom Goals from Supabase -->
+            ${this.renderCustomGoalsSectionHtml(sem.sem)}
           </div>
 
           <!-- Right Column: Problems Target + Major Project + Courses -->
@@ -949,7 +906,7 @@ class PlacementOSApp {
                   <div class="title">SQL Target</div>
                   <div style="font-size:0.78rem; color:var(--ink-secondary);">DataLemur + LeetCode SQL 50</div>
                 </div>
-                <div class="count">${this.metrics.sqlSolved} / 150</div>
+                <div class="count">${sqlSolved} / 150</div>
               </div>
 
               <div class="problems-stat-box">
@@ -957,7 +914,7 @@ class PlacementOSApp {
                   <div class="title">DSA Target</div>
                   <div style="font-size:0.78rem; color:var(--ink-secondary);">Patterns over pure count</div>
                 </div>
-                <div class="count">${this.metrics.dsaSolved} / 150</div>
+                <div class="count">${dsaSolved} / 150</div>
               </div>
 
               <div class="problems-links">
@@ -985,7 +942,6 @@ class PlacementOSApp {
     const skillSections = sem.sections.filter(s => !s.isProject);
 
     return skillSections.map((sec, ci) => {
-      // Calculate section completion %
       const actualCi = sem.sections.indexOf(sec);
       const totalItems = sec.items.length;
       let doneItems = 0;
@@ -1025,6 +981,32 @@ class PlacementOSApp {
         </div>
       `;
     }).join("");
+  }
+
+  renderCustomGoalsSectionHtml(semester) {
+    const semGoals = this.customGoals.filter(g => g.semester === semester);
+    if (semGoals.length === 0) return "";
+
+    return `
+      <div class="card" style="margin-bottom:1.4rem;">
+        <div class="section-title-wrap">
+          <div class="section-title">
+            <span>➕</span> Custom Goals (Supabase Cloud)
+          </div>
+        </div>
+        <ul class="checklist-items">
+          ${semGoals.map(g => `
+            <li class="check-item ${g.is_completed ? 'done' : ''}" style="justify-content:space-between;">
+              <div style="display:flex; align-items:center; gap:0.65rem;">
+                <input type="checkbox" id="${g.id}" ${g.is_completed ? 'checked' : ''} data-goal-toggle="${g.id}">
+                <label for="${g.id}">${g.title}</label>
+              </div>
+              <button class="btn-subtle" data-delete-goal="${g.id}" style="color:#C53030; padding:0.15rem 0.45rem;">✕</button>
+            </li>
+          `).join("")}
+        </ul>
+      </div>
+    `;
   }
 
   renderSemesterProjectCardHtml(sem, semIdx) {
@@ -1083,7 +1065,6 @@ class PlacementOSApp {
   }
 
   bindRoadmapEvents() {
-    // Semester selector tabs
     document.querySelectorAll("[data-sem-tab]").forEach(btn => {
       btn.addEventListener("click", (e) => {
         const semIdx = parseInt(e.currentTarget.getAttribute("data-sem-tab"), 10);
@@ -1092,7 +1073,6 @@ class PlacementOSApp {
       });
     });
 
-    // Accordions
     document.querySelectorAll(".skill-topic-summary").forEach(summary => {
       summary.addEventListener("click", () => {
         const accordion = summary.closest(".skill-topic-accordion");
@@ -1100,18 +1080,41 @@ class PlacementOSApp {
       });
     });
 
-    // Checkbox toggles
+    // Checkbox toggles with direct Supabase save
     document.querySelectorAll("[data-task-toggle]").forEach(checkbox => {
-      checkbox.addEventListener("change", (e) => {
+      checkbox.addEventListener("change", async (e) => {
         const id = e.target.getAttribute("data-task-toggle");
-        this.setTaskDone(id, e.target.checked);
         const li = e.target.closest(".check-item");
         li?.classList.toggle("done", e.target.checked);
-        this.updateSidebarFocus();
+        await this.toggleTaskDone(id, e.target.checked);
       });
     });
 
-    // Navigation buttons
+    // Custom goal toggles
+    document.querySelectorAll("[data-goal-toggle]").forEach(checkbox => {
+      checkbox.addEventListener("change", async (e) => {
+        const id = e.target.getAttribute("data-goal-toggle");
+        const goal = this.customGoals.find(g => g.id === id);
+        if (goal) goal.is_completed = e.target.checked;
+        const li = e.target.closest(".check-item");
+        li?.classList.toggle("done", e.target.checked);
+        await db.setCustomGoalStatus(id, e.target.checked);
+      });
+    });
+
+    // Delete custom goal
+    document.querySelectorAll("[data-delete-goal]").forEach(btn => {
+      btn.addEventListener("click", async (e) => {
+        const id = e.currentTarget.getAttribute("data-delete-goal");
+        if (confirm("Delete this custom goal from Supabase?")) {
+          this.customGoals = this.customGoals.filter(g => g.id !== id);
+          await db.deleteCustomGoal(id);
+          this.renderRoadmapView();
+          this.showToast("Deleted goal from Supabase");
+        }
+      });
+    });
+
     document.getElementById("openAddTaskRoadmapBtn")?.addEventListener("click", () => this.openAddTaskModal());
     document.getElementById("jumpToPracticeBtn")?.addEventListener("click", () => this.switchView("practice"));
     document.getElementById("openProjectsFromRoadmapBtn")?.addEventListener("click", () => this.switchView("projects"));
@@ -1145,7 +1148,6 @@ class PlacementOSApp {
             </thead>
             <tbody>
               ${this.skillsMatrix.map(skill => {
-                // Approximate completion based on related tasks
                 let pct = 0;
                 if (skill.id === "python") pct = 72;
                 else if (skill.id === "sql") pct = 45;
@@ -1291,10 +1293,10 @@ class PlacementOSApp {
                 </div>
 
                 <div style="border-top:1px solid var(--line); padding-top:1rem; margin-top:1rem; display:flex; gap:0.5rem;">
-                  <button class="btn-subtle" style="flex:1;" onclick="alert('Repository linking is ready. Make sure to commit clean README with architecture screenshots!')">
+                  <button class="btn-subtle" style="flex:1;" onclick="alert('Repository linking ready. PostgreSQL schema connected to project PSS.')">
                     GitHub Repo
                   </button>
-                  <button class="btn-primary" style="flex:1; justify-content:center;" onclick="alert('Deployment checklist: Docker container running on cloud / Render / Vercel')">
+                  <button class="btn-primary" style="flex:1; justify-content:center;" onclick="alert('Deployment checklist: Docker container on cloud / Render / Vercel')">
                     Live Demo
                   </button>
                 </div>
@@ -1307,14 +1309,12 @@ class PlacementOSApp {
 
     this.dom.mainContainer.innerHTML = html;
 
-    // Checkbox toggles inside projects
     document.querySelectorAll("[data-task-toggle]").forEach(checkbox => {
-      checkbox.addEventListener("change", (e) => {
+      checkbox.addEventListener("change", async (e) => {
         const id = e.target.getAttribute("data-task-toggle");
-        this.setTaskDone(id, e.target.checked);
         const li = e.target.closest(".check-item");
         li?.classList.toggle("done", e.target.checked);
-        this.updateSidebarFocus();
+        await this.toggleTaskDone(id, e.target.checked);
       });
     });
   }
@@ -1323,8 +1323,11 @@ class PlacementOSApp {
      VIEW 5: PRACTICE (DSA & SQL TRACKER)
      ========================================================================== */
   renderPracticeView() {
-    const dsaPct = Math.min(100, Math.round((this.metrics.dsaSolved / 150) * 100));
-    const sqlPct = Math.min(100, Math.round((this.metrics.sqlSolved / 150) * 100));
+    const dsaSolved = this.profile?.dsa_solved ?? 42;
+    const sqlSolved = this.profile?.sql_solved ?? 68;
+
+    const dsaPct = Math.min(100, Math.round((dsaSolved / 150) * 100));
+    const sqlPct = Math.min(100, Math.round((sqlSolved / 150) * 100));
 
     const html = `
       <div>
@@ -1332,7 +1335,7 @@ class PlacementOSApp {
           <div>
             <h2 class="welcome-title">Problem Solving & Practice Deck</h2>
             <div class="welcome-sub">
-              Systematic tracking for LeetCode DSA and DataLemur/SQL technical assessments
+              Systematic tracking for LeetCode DSA and DataLemur/SQL assessments (Synced to Supabase)
             </div>
           </div>
         </div>
@@ -1349,7 +1352,7 @@ class PlacementOSApp {
 
             <div class="counter-display">
               <div>
-                <div class="counter-value">${this.metrics.dsaSolved}</div>
+                <div class="counter-value">${dsaSolved}</div>
                 <div class="counter-target">Problems Solved of 150 Target (${dsaPct}%)</div>
               </div>
               <div class="counter-actions">
@@ -1396,7 +1399,7 @@ class PlacementOSApp {
 
             <div class="counter-display">
               <div>
-                <div class="counter-value">${this.metrics.sqlSolved}</div>
+                <div class="counter-value">${sqlSolved}</div>
                 <div class="counter-target">Problems Solved of 150 Target (${sqlPct}%)</div>
               </div>
               <div class="counter-actions">
@@ -1437,48 +1440,43 @@ class PlacementOSApp {
 
     this.dom.mainContainer.innerHTML = html;
 
-    // Counter handlers
-    document.getElementById("dsaPlus1Btn")?.addEventListener("click", () => {
-      this.metrics.dsaSolved++;
-      this.saveMetrics();
+    document.getElementById("dsaPlus1Btn")?.addEventListener("click", async () => {
+      this.profile.dsa_solved = (this.profile.dsa_solved || 42) + 1;
       this.renderPracticeView();
-      this.showToast("DSA count: " + this.metrics.dsaSolved);
+      await db.updateProfile(this.profile.id, { dsa_solved: this.profile.dsa_solved });
     });
 
-    document.getElementById("dsaPlus5Btn")?.addEventListener("click", () => {
-      this.metrics.dsaSolved += 5;
-      this.saveMetrics();
+    document.getElementById("dsaPlus5Btn")?.addEventListener("click", async () => {
+      this.profile.dsa_solved = (this.profile.dsa_solved || 42) + 5;
       this.renderPracticeView();
-      this.showToast("DSA count: " + this.metrics.dsaSolved);
+      await db.updateProfile(this.profile.id, { dsa_solved: this.profile.dsa_solved });
     });
 
-    document.getElementById("dsaMinusBtn")?.addEventListener("click", () => {
-      if (this.metrics.dsaSolved > 0) {
-        this.metrics.dsaSolved--;
-        this.saveMetrics();
+    document.getElementById("dsaMinusBtn")?.addEventListener("click", async () => {
+      if ((this.profile.dsa_solved || 0) > 0) {
+        this.profile.dsa_solved = this.profile.dsa_solved - 1;
         this.renderPracticeView();
+        await db.updateProfile(this.profile.id, { dsa_solved: this.profile.dsa_solved });
       }
     });
 
-    document.getElementById("sqlPlus1Btn")?.addEventListener("click", () => {
-      this.metrics.sqlSolved++;
-      this.saveMetrics();
+    document.getElementById("sqlPlus1Btn")?.addEventListener("click", async () => {
+      this.profile.sql_solved = (this.profile.sql_solved || 68) + 1;
       this.renderPracticeView();
-      this.showToast("SQL count: " + this.metrics.sqlSolved);
+      await db.updateProfile(this.profile.id, { sql_solved: this.profile.sql_solved });
     });
 
-    document.getElementById("sqlPlus5Btn")?.addEventListener("click", () => {
-      this.metrics.sqlSolved += 5;
-      this.saveMetrics();
+    document.getElementById("sqlPlus5Btn")?.addEventListener("click", async () => {
+      this.profile.sql_solved = (this.profile.sql_solved || 68) + 5;
       this.renderPracticeView();
-      this.showToast("SQL count: " + this.metrics.sqlSolved);
+      await db.updateProfile(this.profile.id, { sql_solved: this.profile.sql_solved });
     });
 
-    document.getElementById("sqlMinusBtn")?.addEventListener("click", () => {
-      if (this.metrics.sqlSolved > 0) {
-        this.metrics.sqlSolved--;
-        this.saveMetrics();
+    document.getElementById("sqlMinusBtn")?.addEventListener("click", async () => {
+      if ((this.profile.sql_solved || 0) > 0) {
+        this.profile.sql_solved = this.profile.sql_solved - 1;
         this.renderPracticeView();
+        await db.updateProfile(this.profile.id, { sql_solved: this.profile.sql_solved });
       }
     });
   }
@@ -1498,17 +1496,17 @@ class PlacementOSApp {
           <div>
             <h2 class="welcome-title">Career CRM & Application Tracker</h2>
             <div class="welcome-sub">
-              Manage your internship pipeline, referrals, and off-campus tech applications
+              Manage your internship pipeline and off-campus applications (Live in Supabase Postgres)
             </div>
           </div>
-          <button class="btn-primary" id="openAddAppBtn">＋ Log Application</button>
+          <button class="btn-primary" id="openAddAppBtn">＋ Log Application to Supabase</button>
         </div>
 
         <!-- Funnel Overview -->
         <div class="career-funnel-grid">
           <div class="funnel-card">
             <div class="num">${totalApps} <span style="font-size:0.95rem; color:var(--ink-muted);">/ 25</span></div>
-            <div class="lbl">Applications Target</div>
+            <div class="lbl">Applications Logged</div>
           </div>
           <div class="funnel-card">
             <div class="num">${responses}</div>
@@ -1541,13 +1539,13 @@ class PlacementOSApp {
             <tbody>
               ${this.applications.length === 0 ? `
                 <tr><td colspan="7" style="text-align:center; padding:2rem; color:var(--ink-muted);">No applications logged yet. Click "Log Application" above.</td></tr>
-              ` : this.applications.map((app, idx) => `
+              ` : this.applications.map((app) => `
                 <tr>
                   <td style="font-weight:600; color:var(--ink-primary);">${app.company}</td>
                   <td>${app.role}</td>
                   <td><span class="stack-pill">${app.platform}</span></td>
                   <td>
-                    <select class="status-select" data-app-status-idx="${idx}" style="padding:0.2rem 0.5rem; border-radius:var(--radius-xs); border:1px solid var(--line); font-size:0.78rem;">
+                    <select class="status-select" data-app-id="${app.id}" style="padding:0.2rem 0.5rem; border-radius:var(--radius-xs); border:1px solid var(--line); font-size:0.78rem;">
                       <option value="Saved" ${app.status === 'Saved' ? 'selected' : ''}>Saved</option>
                       <option value="Applied" ${app.status === 'Applied' ? 'selected' : ''}>Applied</option>
                       <option value="Interview" ${app.status === 'Interview' ? 'selected' : ''}>Interview</option>
@@ -1555,10 +1553,10 @@ class PlacementOSApp {
                       <option value="Rejected" ${app.status === 'Rejected' ? 'selected' : ''}>Rejected</option>
                     </select>
                   </td>
-                  <td style="color:var(--ink-secondary); font-size:0.8rem;">${app.date || '-'}</td>
+                  <td style="color:var(--ink-secondary); font-size:0.8rem;">${app.applied_date || '-'}</td>
                   <td style="color:var(--ink-secondary); font-size:0.8rem; max-width:220px;">${app.notes || '-'}</td>
                   <td>
-                    <button class="btn-subtle" data-delete-app-idx="${idx}" style="color:#C53030;">Delete</button>
+                    <button class="btn-subtle" data-delete-app="${app.id}" style="color:#C53030;">Delete</button>
                   </td>
                 </tr>
               `).join("")}
@@ -1595,27 +1593,29 @@ class PlacementOSApp {
 
     this.dom.mainContainer.innerHTML = html;
 
-    // Events
     document.getElementById("openAddAppBtn")?.addEventListener("click", () => this.openAddAppModal());
 
-    document.querySelectorAll("[data-app-status-idx]").forEach(select => {
-      select.addEventListener("change", (e) => {
-        const idx = parseInt(e.target.getAttribute("data-app-status-idx"), 10);
-        this.applications[idx].status = e.target.value;
-        this.saveApplications();
-        this.renderCareerView();
-        this.showToast("Application status updated!");
+    document.querySelectorAll("[data-app-id]").forEach(select => {
+      select.addEventListener("change", async (e) => {
+        const id = e.target.getAttribute("data-app-id");
+        const status = e.target.value;
+        const app = this.applications.find(a => a.id === id);
+        if (app) app.status = status;
+        this.setSyncStatus("syncing", "Updating application in Supabase...");
+        await db.updateCareerApplicationStatus(id, status);
+        this.setSyncStatus("connected", "Supabase Cloud: PSS (Synced)");
+        this.showToast("Application status updated in Supabase!");
       });
     });
 
-    document.querySelectorAll("[data-delete-app-idx]").forEach(btn => {
-      btn.addEventListener("click", (e) => {
-        const idx = parseInt(e.target.getAttribute("data-delete-app-idx"), 10);
-        if (confirm("Delete this application entry?")) {
-          this.applications.splice(idx, 1);
-          this.saveApplications();
+    document.querySelectorAll("[data-delete-app]").forEach(btn => {
+      btn.addEventListener("click", async (e) => {
+        const id = e.currentTarget.getAttribute("data-delete-app");
+        if (confirm("Delete this application from Supabase database?")) {
+          this.applications = this.applications.filter(a => a.id !== id);
+          await db.deleteCareerApplication(id);
           this.renderCareerView();
-          this.showToast("Application deleted");
+          this.showToast("Application deleted from Supabase");
         }
       });
     });
@@ -1641,7 +1641,7 @@ class PlacementOSApp {
           <div>
             <h2 class="welcome-title">Learning Analytics & Placement Readiness</h2>
             <div class="welcome-sub">
-              Study time investment and category progression tracking
+              Study time investment and category progression tracking (Supabase Cloud Database)
             </div>
           </div>
         </div>
@@ -1651,18 +1651,19 @@ class PlacementOSApp {
           <div class="card">
             <div class="section-title-wrap">
               <div class="section-title">
-                <span>⏱️</span> Weekly Study Hours Target
+                <span>⏱️</span> Weekly Study Hours Log
               </div>
               <span class="status-pill-crm Applied">≈ 19.5h Planned</span>
             </div>
 
             <div class="weekly-chart-box">
               ${STUDY_HOURS_TARGET.map(d => {
-                const heightPct = Math.round((d.target / 5.0) * 100);
+                const logged = this.studyHours[d.day] || d.target;
+                const heightPct = Math.round((logged / 5.0) * 100);
                 return `
                   <div class="bar-col">
                     <div class="bar-fill" style="height: ${heightPct}%;">
-                      <div class="bar-tooltip">${d.target}h</div>
+                      <div class="bar-tooltip">${logged}h</div>
                     </div>
                     <div class="bar-day-lbl">${d.day}</div>
                   </div>
@@ -1706,7 +1707,7 @@ class PlacementOSApp {
             <span class="status-pill-crm Interview">Semester 3 Target: 35+</span>
           </div>
           <p style="font-size:0.86rem; color:var(--ink-secondary); line-height:1.5;">
-            Calculated across verified skill topics, DSA problem counts (42/150), SQL targets (68/150), and Project #1 deliverables. You are tracking ahead of schedule for Semester 3.
+            Calculated across verified skill topics in Supabase, DSA problem counts (42/150), SQL targets (68/150), and Project #1 deliverables. You are tracking ahead of schedule for Semester 3.
           </p>
         </div>
       </div>
@@ -1805,9 +1806,9 @@ class PlacementOSApp {
       <div>
         <div class="section-title-wrap">
           <div>
-            <h2 class="welcome-title">Export, Backup & Restore Hub</h2>
+            <h2 class="welcome-title">Export, Backup & Database Hub</h2>
             <div class="welcome-sub">
-              100% offline, zero-telemetry local data management
+              Supabase Project: <b>PSS</b> (PostgreSQL 17 on ap-southeast-1)
             </div>
           </div>
         </div>
@@ -1818,7 +1819,7 @@ class PlacementOSApp {
               <span>📄</span> Export Tabular CSV
             </div>
             <p style="font-size:0.84rem; color:var(--ink-secondary); margin:0.5rem 0 1rem;">
-              Download your complete verified roadmap checklist in RFC-4180 compliant CSV format for Google Sheets or Excel.
+              Download your complete verified roadmap from Supabase in CSV format for Google Sheets or Excel.
             </p>
             <button class="btn-primary" id="exportCsvBtn">Download CSV</button>
           </div>
@@ -1835,22 +1836,22 @@ class PlacementOSApp {
 
           <div class="card">
             <div class="section-title">
-              <span>💾</span> JSON Offline Backup
+              <span>💾</span> JSON Database Snapshot
             </div>
             <p style="font-size:0.84rem; color:var(--ink-secondary); margin:0.5rem 0 1rem;">
-              Export full state including problems solved, custom goals, and career tracker as a JSON file.
+              Export full state including problems solved, custom goals, and career tracker as JSON.
             </p>
             <button class="btn-primary" id="backupJsonBtn">Export JSON Backup</button>
           </div>
 
           <div class="card">
             <div class="section-title">
-              <span>♻️</span> Reset Progress
+              <span>♻️</span> Reset All Cloud Checkboxes
             </div>
             <p style="font-size:0.84rem; color:var(--ink-secondary); margin:0.5rem 0 1rem;">
-              Clear all local progress checkboxes if starting fresh.
+              Unchecks all curriculum items in Supabase Postgres table.
             </p>
-            <button class="btn-outline" style="color:#C53030;" id="resetAllBtn">Reset All Checkboxes</button>
+            <button class="btn-outline" style="color:#C53030;" id="resetAllBtn">Reset Cloud Tasks</button>
           </div>
         </div>
       </div>
@@ -1858,9 +1859,8 @@ class PlacementOSApp {
 
     this.dom.mainContainer.innerHTML = html;
 
-    // Events
     document.getElementById("exportCsvBtn")?.addEventListener("click", () => {
-      exportToCSV(this.curriculum, this.state, this.customTasks);
+      exportToCSV(this.curriculum, this.taskState, this.customGoals);
       this.showToast("CSV export downloaded");
     });
 
@@ -1869,16 +1869,16 @@ class PlacementOSApp {
     });
 
     document.getElementById("backupJsonBtn")?.addEventListener("click", () => {
-      exportBackupJSON(this.state, this.customTasks);
+      exportBackupJSON(this.taskState, this.customGoals);
       this.showToast("Backup JSON downloaded");
     });
 
-    document.getElementById("resetAllBtn")?.addEventListener("click", () => {
-      if (confirm("Are you sure? This clears all verified checkboxes.")) {
-        this.state = {};
-        this.saveState();
-        this.render();
-        this.showToast("All progress reset");
+    document.getElementById("resetAllBtn")?.addEventListener("click", async () => {
+      if (confirm("Are you sure? This resets all verified checkboxes in Supabase database.")) {
+        this.setSyncStatus("syncing", "Resetting tasks in Supabase...");
+        await db.resetAllCurriculumTasks();
+        await this.loadFromSupabase();
+        this.showToast("All tasks reset in Supabase database");
       }
     });
   }
@@ -1895,7 +1895,7 @@ class PlacementOSApp {
     this.dom.addTaskForm?.reset();
   }
 
-  handleAddTaskSubmit() {
+  async handleAddTaskSubmit() {
     const titleInput = document.getElementById("modalTaskTitle");
     const semSelect = document.getElementById("modalTaskSem");
     const title = titleInput.value.trim();
@@ -1903,18 +1903,24 @@ class PlacementOSApp {
 
     if (!title) return;
 
-    this.customTasks.push({
-      id: `custom-${Date.now()}`,
-      title,
-      sem,
-      done: false,
-      at: new Date().toISOString().slice(0, 10)
-    });
-
-    this.saveCustomTasks();
     this.closeAddTaskModal();
-    this.render();
-    this.showToast("Custom task added to Semester " + sem);
+    this.setSyncStatus("syncing", "Saving goal to Supabase...");
+
+    const newGoal = {
+      id: `goal-${Date.now()}`,
+      title,
+      semester: sem
+    };
+
+    try {
+      await db.addCustomGoal(newGoal);
+      this.customGoals.unshift({ ...newGoal, is_completed: false });
+      this.setSyncStatus("connected", "Supabase Cloud: PSS (Synced)");
+      this.render();
+      this.showToast("Saved goal to Supabase database!");
+    } catch (err) {
+      this.setSyncStatus("error", "Error saving goal to Supabase");
+    }
   }
 
   openAddAppModal() {
@@ -1926,7 +1932,7 @@ class PlacementOSApp {
     this.dom.addAppForm?.reset();
   }
 
-  handleAddAppSubmit() {
+  async handleAddAppSubmit() {
     const company = document.getElementById("modalAppCompany").value.trim();
     const role = document.getElementById("modalAppRole").value.trim();
     const platform = document.getElementById("modalAppPlatform").value;
@@ -1935,20 +1941,31 @@ class PlacementOSApp {
 
     if (!company || !role) return;
 
-    this.applications.unshift({
-      id: `app-${Date.now()}`,
+    this.closeAddAppModal();
+    this.setSyncStatus("syncing", "Saving application to Supabase...");
+
+    const newApp = {
       company,
       role,
       platform,
       status,
-      date: new Date().toISOString().slice(0, 10),
+      applied_date: new Date().toISOString().slice(0, 10),
       notes
-    });
+    };
 
-    this.saveApplications();
-    this.closeAddAppModal();
-    this.renderCareerView();
-    this.showToast("Application logged for " + company);
+    try {
+      const saved = await db.addCareerApplication(newApp);
+      if (saved && saved.length > 0) {
+        this.applications.unshift(saved[0]);
+      } else {
+        this.applications.unshift(newApp);
+      }
+      this.setSyncStatus("connected", "Supabase Cloud: PSS (Synced)");
+      this.renderCareerView();
+      this.showToast("Application saved to Supabase!");
+    } catch (err) {
+      this.setSyncStatus("error", "Error saving application to Supabase");
+    }
   }
 
   showToast(msg) {
