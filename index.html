@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#2E6B56">
-  <meta name="description" content="Personal Placement Dashboard & Roadmap for BCA Data Science & AI-ML (Sem 3 to Sem 6)">
-  <title>Placement Dashboard · Samar Raj</title>
+  <meta name="description" content="Placement OS - Personal academic, roadmap, projects, skills, and placement tracker for Samar Raj">
+  <title>Placement OS · Samar Raj</title>
 
-  <!-- Google Fonts: Inter -->
+  <!-- Google Fonts: Inter (UI) & Merriweather/Playfair/Georgia fallback -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -15,143 +15,205 @@
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-  <div class="app-container">
+  <div class="app-shell">
     
     <!-- Printable Header (Only appears on PDF / Print) -->
     <div class="print-header">
-      <h1>Placement Preparation Report & Checklist</h1>
+      <h1>Placement OS — Preparation Report & Curriculum Checklist</h1>
       <p>Candidate: Samar Raj · BCA (Data Science / AI-ML) · Generated on <span id="printDate"></span></p>
     </div>
 
     <!-- Top Application Bar -->
-    <header class="top-header">
-      <div class="brand-section">
-        <div class="brand-badge">SR</div>
+    <header class="app-topbar">
+      <!-- Brand Area -->
+      <div class="brand-wrap">
+        <div class="brand-badge">OS</div>
         <div class="brand-text">
-          <h1>Placement Dashboard</h1>
-          <p>Samar · BCA (Data Science / AI-ML) · Sem 3 → Sem 6</p>
+          <h1>
+            PLACEMENT OS
+            <span class="brand-tag">Sem 3 Active</span>
+          </h1>
+          <div class="brand-sub">Samar Raj · BCA (Data Science / AI-ML)</div>
         </div>
       </div>
-      <div class="header-actions">
-        <button class="icon-btn" id="themeToggleBtn" aria-label="Toggle dark/light theme" title="Toggle theme">🌙</button>
-        <button class="btn-primary" id="addTaskBtn" style="display: inline-flex;">
-          <span>＋</span> <span>Add Task</span>
+
+      <!-- Topbar Navigation Pills -->
+      <nav class="topbar-nav" aria-label="Main Views">
+        <button class="top-nav-btn active" data-nav-view="dashboard">
+          <span>📊</span> Dashboard
         </button>
+        <button class="top-nav-btn" data-nav-view="roadmap">
+          <span>🗺️</span> Roadmap
+        </button>
+        <button class="top-nav-btn" data-nav-view="skills">
+          <span>⚡</span> Skills
+        </button>
+        <button class="top-nav-btn" data-nav-view="projects">
+          <span>🚀</span> Projects
+        </button>
+        <button class="top-nav-btn" data-nav-view="practice">
+          <span>💻</span> Practice
+        </button>
+        <button class="top-nav-btn" data-nav-view="career">
+          <span>💼</span> Career
+        </button>
+        <button class="top-nav-btn" data-nav-view="analytics">
+          <span>📈</span> Analytics
+        </button>
+      </nav>
+
+      <!-- Topbar Right Actions -->
+      <div class="topbar-actions">
+        <button class="btn-primary" id="openAddTaskBtn" style="padding:0.4rem 0.8rem; font-size:0.8rem;">
+          <span>＋</span> <span>Add Goal</span>
+        </button>
+        <button class="icon-btn" id="themeToggleBtn" aria-label="Toggle dark/light theme" title="Toggle theme">🌙</button>
+        
+        <!-- User Profile Pill -->
+        <div class="user-profile-badge">
+          <div class="user-avatar">SR</div>
+          <span>Samar</span>
+        </div>
       </div>
     </header>
 
-    <!-- Desktop Navigation Tabs -->
-    <nav class="view-nav" aria-label="Dashboard sections">
-      <button class="tab-btn active" data-nav-view="checklist">
-        <span>📋</span> Checklist
+    <!-- App Body (Sidebar + Main Content Area) -->
+    <div class="app-body">
+      <!-- Left Sidebar (Desktop) -->
+      <aside class="app-sidebar">
+        <div>
+          <!-- Group 1: Overview -->
+          <div class="sidebar-nav-group">
+            <div class="sidebar-group-title">Overview</div>
+            <ul class="sidebar-menu">
+              <li>
+                <button class="sidebar-btn active" data-nav-view="dashboard">
+                  <span class="icon">📊</span>
+                  <span>Dashboard</span>
+                </button>
+              </li>
+              <li>
+                <button class="sidebar-btn" data-nav-view="roadmap">
+                  <span class="icon">🗺️</span>
+                  <span>Roadmap</span>
+                </button>
+              </li>
+              <li>
+                <button class="sidebar-btn" data-nav-view="skills">
+                  <span class="icon">⚡</span>
+                  <span>Skills Matrix</span>
+                </button>
+              </li>
+              <li>
+                <button class="sidebar-btn" data-nav-view="projects">
+                  <span class="icon">🚀</span>
+                  <span>Projects</span>
+                </button>
+              </li>
+              <li>
+                <button class="sidebar-btn" data-nav-view="practice">
+                  <span class="icon">💻</span>
+                  <span>DSA & SQL</span>
+                </button>
+              </li>
+              <li>
+                <button class="sidebar-btn" data-nav-view="career">
+                  <span class="icon">💼</span>
+                  <span>Career CRM</span>
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Group 2: Resources & Insights -->
+          <div class="sidebar-nav-group">
+            <div class="sidebar-group-title">Resources</div>
+            <ul class="sidebar-menu">
+              <li>
+                <button class="sidebar-btn" data-nav-view="rhythm">
+                  <span class="icon">📅</span>
+                  <span>Weekly Rhythm</span>
+                </button>
+              </li>
+              <li>
+                <button class="sidebar-btn" data-nav-view="targets">
+                  <span class="icon">🎯</span>
+                  <span>Placement Targets</span>
+                </button>
+              </li>
+              <li>
+                <button class="sidebar-btn" data-nav-view="analytics">
+                  <span class="icon">📈</span>
+                  <span>Learning Analytics</span>
+                </button>
+              </li>
+              <li>
+                <button class="sidebar-btn" data-nav-view="export">
+                  <span class="icon">📥</span>
+                  <span>Backup & Export</span>
+                </button>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- Sidebar Current Focus Mini Card -->
+        <div class="sidebar-focus-card">
+          <div class="label">Current Focus · Sem 3</div>
+          <div class="topic" id="sidebarFocusTopic">Python + SQL + DSA</div>
+          <div class="progress-line">
+            <div class="progress-fill" id="sidebarFocusFill" style="width: 34%;"></div>
+          </div>
+          <button class="action-btn" id="sidebarFocusBtn">Continue Roadmap →</button>
+        </div>
+      </aside>
+
+      <!-- Main Dynamic Content Panel -->
+      <main class="app-main" id="mainContent"></main>
+    </div>
+
+    <!-- Mobile Sticky Bottom Navigation -->
+    <nav class="mobile-bottom-bar" aria-label="Mobile Navigation">
+      <button class="mobile-nav-item active" data-nav-view="dashboard">
+        <span class="icon">📊</span>
+        <span>Home</span>
       </button>
-      <button class="tab-btn" data-nav-view="projects">
-        <span>🚀</span> Major Projects
+      <button class="mobile-nav-item" data-nav-view="roadmap">
+        <span class="icon">🗺️</span>
+        <span>Roadmap</span>
       </button>
-      <button class="tab-btn" data-nav-view="timetable">
-        <span>📅</span> Weekly Timetable
+      <button class="mobile-nav-item" data-nav-view="skills">
+        <span class="icon">⚡</span>
+        <span>Skills</span>
       </button>
-      <button class="tab-btn" data-nav-view="targets">
-        <span>🎯</span> Placement Targets
+      <button class="mobile-nav-item" data-nav-view="projects">
+        <span class="icon">🚀</span>
+        <span>Projects</span>
       </button>
-      <button class="tab-btn" data-nav-view="export">
-        <span>📥</span> Export & Backup
+      <button class="mobile-nav-item" data-nav-view="career">
+        <span class="icon">💼</span>
+        <span>Career</span>
       </button>
     </nav>
 
-    <!-- KPI Summary Cards -->
-    <section class="kpi-grid" id="kpiGrid">
-      <div class="kpi-card">
-        <div class="progress-ring lg" id="ringOverall">
-          <b id="pctOverall">0%</b>
-        </div>
-        <div class="kpi-info">
-          <b id="overallFrac">0/0</b>
-          <span>Overall complete</span>
-        </div>
-      </div>
-
-      <div class="kpi-card">
-        <div class="progress-ring lg" id="ringCurrent">
-          <b id="pctCurrent">0%</b>
-        </div>
-        <div class="kpi-info">
-          <b id="currentLabel">Sem 3</b>
-          <span>Current focus</span>
-        </div>
-      </div>
-
-      <div class="kpi-card">
-        <div class="progress-ring lg" id="ringProj">
-          <b id="pctProj">0/3</b>
-        </div>
-        <div class="kpi-info">
-          <b>Projects</b>
-          <span>fully checked off</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- Dynamic Milestone Message Banner -->
-    <aside class="message-card" id="messageCard"></aside>
-
-    <!-- Semester Switcher Grid -->
-    <div class="semester-grid" id="semesterGrid"></div>
-
-    <!-- Live Search & Topic Filter Pills -->
-    <div class="filter-container" id="filterContainer">
-      <div class="search-box">
-        <input type="text" id="searchInput" placeholder="Search tasks, topics (e.g. Pandas, SQL, Docker, RAG)..." autocomplete="off">
-        <button class="search-clear" id="searchClear" style="display: none;" title="Clear search">✕</button>
-      </div>
-      <div class="filter-pills" id="filterPills"></div>
-    </div>
-
-    <!-- Main Dynamic Content Panel -->
-    <main class="content-panel" id="contentPanel"></main>
-
   </div>
 
-  <!-- Mobile Sticky Bottom Navigation -->
-  <nav class="mobile-bottom-bar" aria-label="Mobile Navigation">
-    <button class="mobile-nav-item active" data-nav-view="checklist">
-      <span class="icon">📋</span>
-      <span>Checklist</span>
-    </button>
-    <button class="mobile-nav-item" data-nav-view="projects">
-      <span class="icon">🚀</span>
-      <span>Projects</span>
-    </button>
-    <button class="mobile-nav-item" data-nav-view="timetable">
-      <span class="icon">📅</span>
-      <span>Rhythm</span>
-    </button>
-    <button class="mobile-nav-item" data-nav-view="targets">
-      <span class="icon">🎯</span>
-      <span>Targets</span>
-    </button>
-    <button class="mobile-nav-item" data-nav-view="export">
-      <span class="icon">📥</span>
-      <span>Export</span>
-    </button>
-  </nav>
-
-  <!-- Add Custom Task Modal -->
+  <!-- Modal: Add Custom Task / Goal -->
   <div class="modal-backdrop" id="addTaskModal">
     <div class="modal-card">
       <div class="modal-header">
-        <h3>Add Custom Task</h3>
+        <h3>Add Custom Placement Goal</h3>
         <button class="icon-btn" id="closeModalBtn" style="border:none; width:30px; height:30px;">✕</button>
       </div>
       <form id="addTaskForm">
         <div class="modal-body">
           <div class="form-group">
-            <label for="modalTaskTitle">Task Description</label>
-            <input type="text" class="form-input" id="modalTaskTitle" placeholder="e.g. Build Kaggle churn model, Solve 10 LeetCode trees" required>
+            <label for="modalTaskTitle">Goal Description</label>
+            <input type="text" class="form-input" id="modalTaskTitle" placeholder="e.g. Solve 10 LeetCode Trees, Build Kaggle RFM model" required>
           </div>
           <div class="form-group">
             <label for="modalTaskSem">Target Semester</label>
-            <select class="form-input" id="modalTaskSem">
+            <select class="form-select" id="modalTaskSem">
               <option value="3">Semester 3 (Sept 2026 – Jan 2027)</option>
               <option value="4">Semester 4 (Jan – Jun 2027)</option>
               <option value="5">Semester 5 (Jul – Dec 2027)</option>
@@ -161,7 +223,59 @@
         </div>
         <div class="modal-footer">
           <button type="button" class="btn-outline" id="cancelModalBtn">Cancel</button>
-          <button type="submit" class="btn-primary">Add Task</button>
+          <button type="submit" class="btn-primary">Save Goal</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Log Career Application -->
+  <div class="modal-backdrop" id="addAppModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Log Job / Internship Application</h3>
+        <button class="icon-btn" id="closeAppModalBtn" style="border:none; width:30px; height:30px;">✕</button>
+      </div>
+      <form id="addAppForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="modalAppCompany">Company Name</label>
+            <input type="text" class="form-input" id="modalAppCompany" placeholder="e.g. Microsoft, Razorpay, Zepto, ABC Tech" required>
+          </div>
+          <div class="form-group">
+            <label for="modalAppRole">Target Role</label>
+            <input type="text" class="form-input" id="modalAppRole" placeholder="e.g. Python Backend Intern, Data Analyst Intern" required>
+          </div>
+          <div class="form-group">
+            <label for="modalAppPlatform">Platform</label>
+            <select class="form-select" id="modalAppPlatform">
+              <option value="LinkedIn">LinkedIn</option>
+              <option value="Wellfound">Wellfound</option>
+              <option value="Internshala">Internshala</option>
+              <option value="Unstop">Unstop</option>
+              <option value="Manipal Portal">Manipal Placement Portal</option>
+              <option value="Cutshort">Cutshort</option>
+              <option value="Direct Referral">Direct Referral</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="modalAppStatus">Current Status</label>
+            <select class="form-select" id="modalAppStatus">
+              <option value="Applied">Applied</option>
+              <option value="Interview">Interview Scheduled</option>
+              <option value="Saved">Saved for Later</option>
+              <option value="Offer">Offer Received</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="modalAppNotes">Notes / Repository Links</label>
+            <input type="text" class="form-input" id="modalAppNotes" placeholder="e.g. Submitted resume with Project 1 link, follow up next Monday">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-outline" id="cancelAppModalBtn">Cancel</button>
+          <button type="submit" class="btn-primary">Log Application</button>
         </div>
       </form>
     </div>
@@ -170,7 +284,7 @@
   <!-- Toast Notification -->
   <div class="toast" id="toast">Saved</div>
 
-  <!-- Printable Date Script Helper -->
+  <!-- Date Helper for Print View -->
   <script>
     document.getElementById("printDate").textContent = new Date().toLocaleDateString(undefined, {
       year: "numeric", month: "long", day: "numeric"
