@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#2E6B56">
+  <meta name="description" content="Personal Placement Dashboard & Roadmap for BCA Data Science & AI-ML (Sem 3 to Sem 6)">
+  <title>Placement Dashboard · Samar Raj</title>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Printable Header (Only appears on PDF / Print) -->
+    <div class="print-header">
+      <h1>Placement Preparation Report & Checklist</h1>
+      <p>Candidate: Samar Raj · BCA (Data Science / AI-ML) · Generated on <span id="printDate"></span></p>
+    </div>
+
+    <!-- Top Application Bar -->
+    <header class="top-header">
+      <div class="brand-section">
+        <div class="brand-badge">SR</div>
+        <div class="brand-text">
+          <h1>Placement Dashboard</h1>
+          <p>Samar · BCA (Data Science / AI-ML) · Sem 3 → Sem 6</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="icon-btn" id="themeToggleBtn" aria-label="Toggle dark/light theme" title="Toggle theme">🌙</button>
+        <button class="btn-primary" id="addTaskBtn" style="display: inline-flex;">
+          <span>＋</span> <span>Add Task</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Desktop Navigation Tabs -->
+    <nav class="view-nav" aria-label="Dashboard sections">
+      <button class="tab-btn active" data-nav-view="checklist">
+        <span>📋</span> Checklist
+      </button>
+      <button class="tab-btn" data-nav-view="projects">
+        <span>🚀</span> Major Projects
+      </button>
+      <button class="tab-btn" data-nav-view="timetable">
+        <span>📅</span> Weekly Timetable
+      </button>
+      <button class="tab-btn" data-nav-view="targets">
+        <span>🎯</span> Placement Targets
+      </button>
+      <button class="tab-btn" data-nav-view="export">
+        <span>📥</span> Export & Backup
+      </button>
+    </nav>
+
+    <!-- KPI Summary Cards -->
+    <section class="kpi-grid" id="kpiGrid">
+      <div class="kpi-card">
+        <div class="progress-ring lg" id="ringOverall">
+          <b id="pctOverall">0%</b>
+        </div>
+        <div class="kpi-info">
+          <b id="overallFrac">0/0</b>
+          <span>Overall complete</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="progress-ring lg" id="ringCurrent">
+          <b id="pctCurrent">0%</b>
+        </div>
+        <div class="kpi-info">
+          <b id="currentLabel">Sem 3</b>
+          <span>Current focus</span>
+        </div>
+      </div>
+
+      <div class="kpi-card">
+        <div class="progress-ring lg" id="ringProj">
+          <b id="pctProj">0/3</b>
+        </div>
+        <div class="kpi-info">
+          <b>Projects</b>
+          <span>fully checked off</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Dynamic Milestone Message Banner -->
+    <aside class="message-card" id="messageCard"></aside>
+
+    <!-- Semester Switcher Grid -->
+    <div class="semester-grid" id="semesterGrid"></div>
+
+    <!-- Live Search & Topic Filter Pills -->
+    <div class="filter-container" id="filterContainer">
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Search tasks, topics (e.g. Pandas, SQL, Docker, RAG)..." autocomplete="off">
+        <button class="search-clear" id="searchClear" style="display: none;" title="Clear search">✕</button>
+      </div>
+      <div class="filter-pills" id="filterPills"></div>
+    </div>
+
+    <!-- Main Dynamic Content Panel -->
+    <main class="content-panel" id="contentPanel"></main>
+
+  </div>
+
+  <!-- Mobile Sticky Bottom Navigation -->
+  <nav class="mobile-bottom-bar" aria-label="Mobile Navigation">
+    <button class="mobile-nav-item active" data-nav-view="checklist">
+      <span class="icon">📋</span>
+      <span>Checklist</span>
+    </button>
+    <button class="mobile-nav-item" data-nav-view="projects">
+      <span class="icon">🚀</span>
+      <span>Projects</span>
+    </button>
+    <button class="mobile-nav-item" data-nav-view="timetable">
+      <span class="icon">📅</span>
+      <span>Rhythm</span>
+    </button>
+    <button class="mobile-nav-item" data-nav-view="targets">
+      <span class="icon">🎯</span>
+      <span>Targets</span>
+    </button>
+    <button class="mobile-nav-item" data-nav-view="export">
+      <span class="icon">📥</span>
+      <span>Export</span>
+    </button>
+  </nav>
+
+  <!-- Add Custom Task Modal -->
+  <div class="modal-backdrop" id="addTaskModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Add Custom Task</h3>
+        <button class="icon-btn" id="closeModalBtn" style="border:none; width:30px; height:30px;">✕</button>
+      </div>
+      <form id="addTaskForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="modalTaskTitle">Task Description</label>
+            <input type="text" class="form-input" id="modalTaskTitle" placeholder="e.g. Build Kaggle churn model, Solve 10 LeetCode trees" required>
+          </div>
+          <div class="form-group">
+            <label for="modalTaskSem">Target Semester</label>
+            <select class="form-input" id="modalTaskSem">
+              <option value="3">Semester 3 (Sept 2026 – Jan 2027)</option>
+              <option value="4">Semester 4 (Jan – Jun 2027)</option>
+              <option value="5">Semester 5 (Jul – Dec 2027)</option>
+              <option value="6">Semester 6 (Jan 2028 onward)</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-outline" id="cancelModalBtn">Cancel</button>
+          <button type="submit" class="btn-primary">Add Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast">Saved</div>
+
+  <!-- Printable Date Script Helper -->
+  <script>
+    document.getElementById("printDate").textContent = new Date().toLocaleDateString(undefined, {
+      year: "numeric", month: "long", day: "numeric"
+    });
+  </script>
+
+  <!-- Application Entry Point -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
