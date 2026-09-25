@@ -77,8 +77,13 @@
         <!-- User Profile Pill -->
         <div class="user-profile-badge">
           <div class="user-avatar">SR</div>
-          <span>Samar</span>
+          <span id="userProfileName">Samar</span>
         </div>
+
+        <!-- Sign Out Button -->
+        <button class="btn-subtle" id="signOutBtn" style="font-size:0.75rem; color:#C53030;" title="Sign out of Placement OS">
+          Sign Out
+        </button>
       </div>
     </header>
 
@@ -283,6 +288,51 @@
           <button type="submit" class="btn-primary">Log Application</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Authentication / Login Screen Gate -->
+  <div class="auth-wrapper" id="authWrapper" style="display: none;">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-logo-badge">OS</div>
+        <h2 class="auth-title">Placement OS</h2>
+        <p class="auth-subtitle">Candidate Authentication · Sem 3 → Sem 6</p>
+      </div>
+
+      <div class="auth-error-banner" id="authErrorBanner">
+        <span>⚠️</span> <span id="authErrorMsg">Invalid email or password</span>
+      </div>
+
+      <form class="auth-form" id="loginForm">
+        <div class="auth-input-group">
+          <label for="loginEmail">Candidate Email</label>
+          <div class="auth-input-wrapper">
+            <input type="email" id="loginEmail" class="auth-input" placeholder="samarrajxyz@gmail.com" value="samarrajxyz@gmail.com" required autocomplete="username">
+          </div>
+        </div>
+
+        <div class="auth-input-group">
+          <label for="loginPassword">Access Password</label>
+          <div class="auth-input-wrapper">
+            <input type="password" id="loginPassword" class="auth-input" placeholder="••••••••••••" value="Samar@9841@raj" required autocomplete="current-password">
+            <button type="button" class="auth-pwd-toggle" id="togglePwdBtn" title="Show/Hide password">👁️</button>
+          </div>
+        </div>
+
+        <button type="submit" class="auth-submit-btn" id="loginSubmitBtn">
+          <span>Sign In to Placement OS</span> <span>→</span>
+        </button>
+
+        <button type="button" class="auth-autofill-btn" id="autofillLoginBtn">
+          ⚡ Autofill Samar's Credentials
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        <span>🔒</span>
+        <span>Secured with Supabase Cloud Auth (Project PSS)</span>
+      </div>
     </div>
   </div>
 

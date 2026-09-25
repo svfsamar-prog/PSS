@@ -20,7 +20,58 @@ class SupabaseService {
       "Content-Type": "application/json",
       "Prefer": "return=representation"
     };
+    this.getSession(); // Initialize session if active
   }
+
+  /* ==========================================
+     Authentication
+     ========================================== */
+  async signIn(email, password) {
+    const authUrl = `${this.url}/auth/v1/token?grant_type=password`;
+    const res = await fetch(authUrl, {
+      method: "POST",
+      headers: {
+        "apikey": this.key,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error_description || data.msg || data.message || "Invalid email or password");
+    }
+
+    if (data.access_token) {
+      sessionStorage.setItem("placement_auth_session", JSON.stringify(data));
+      this.headers["Authorization"] = `Bearer ${data.access_token}`;
+    }
+    return data;
+  }
+
+  signOut() {
+    sessionStorage.removeItem("placement_auth_session");
+    this.headers["Authorization"] = `Bearer ${this.key}`;
+  }
+
+  getSession() {
+    try {
+      const saved = sessionStorage.getItem("placement_auth_session");
+      if (!saved) return null;
+      const parsed = JSON.parse(saved);
+      if (parsed && parsed.access_token) {
+        this.headers["Authorization"] = `Bearer ${parsed.access_token}`;
+        return parsed;
+      }
+    } catch (e) {}
+    return null;
+  }
+
+  getUser() {
+    const session = this.getSession();
+    return session?.user || null;
+  }
+
 
   async request(endpoint, options = {}) {
     const fullUrl = `${this.url}/rest/v1/${endpoint}`;

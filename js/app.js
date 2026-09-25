@@ -38,7 +38,75 @@ class PlacementOSApp {
 
     this.initDOM();
     this.bindEvents();
-    this.loadFromSupabase();
+    this.checkAuthAndStart();
+  }
+
+  checkAuthAndStart() {
+    const session = db.getSession();
+    const authWrapper = document.getElementById("authWrapper");
+
+    if (!session) {
+      if (authWrapper) authWrapper.style.display = "flex";
+      this.bindAuthEvents();
+    } else {
+      if (authWrapper) authWrapper.style.display = "none";
+      const user = db.getUser();
+      const profileName = document.getElementById("userProfileName");
+      if (profileName) profileName.textContent = user?.email ? user.email.split("@")[0] : "Samar";
+      this.loadFromSupabase();
+    }
+  }
+
+  bindAuthEvents() {
+    const form = document.getElementById("loginForm");
+    const errorBanner = document.getElementById("authErrorBanner");
+    const errorMsg = document.getElementById("authErrorMsg");
+    const submitBtn = document.getElementById("loginSubmitBtn");
+    const togglePwdBtn = document.getElementById("togglePwdBtn");
+    const pwdInput = document.getElementById("loginPassword");
+    const emailInput = document.getElementById("loginEmail");
+    const autofillBtn = document.getElementById("autofillLoginBtn");
+
+    togglePwdBtn?.addEventListener("click", () => {
+      const type = pwdInput.getAttribute("type") === "password" ? "text" : "password";
+      pwdInput.setAttribute("type", type);
+      togglePwdBtn.textContent = type === "password" ? "👁️" : "🙈";
+    });
+
+    autofillBtn?.addEventListener("click", () => {
+      emailInput.value = "samarrajxyz@gmail.com";
+      pwdInput.value = "Samar@9841@raj";
+      this.showToast("Credentials autofilled!");
+    });
+
+    form?.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = emailInput.value.trim();
+      const password = pwdInput.value;
+
+      errorBanner.classList.remove("show");
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `<span>Authenticating...</span> <span>⏳</span>`;
+
+      try {
+        await db.signIn(email, password);
+        const authWrapper = document.getElementById("authWrapper");
+        if (authWrapper) authWrapper.style.display = "none";
+
+        const profileName = document.getElementById("userProfileName");
+        if (profileName) profileName.textContent = email.split("@")[0];
+
+        this.showToast("Welcome back, Samar! Authenticated via Supabase.");
+        this.loadFromSupabase();
+      } catch (err) {
+        console.error("Login failed:", err);
+        errorMsg.textContent = err.message || "Invalid credentials. Please verify your email and password.";
+        errorBanner.classList.add("show");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `<span>Sign In to Placement OS</span> <span>→</span>`;
+      }
+    });
   }
 
   /* ==========================================================================
@@ -158,6 +226,17 @@ class PlacementOSApp {
     this.dom.sidebarFocusBtn?.addEventListener("click", () => {
       this.activeSemIndex = 0;
       this.switchView("roadmap");
+    });
+
+    // Sign Out Button
+    document.getElementById("signOutBtn")?.addEventListener("click", () => {
+      if (confirm("Sign out of Placement OS?")) {
+        db.signOut();
+        const authWrapper = document.getElementById("authWrapper");
+        if (authWrapper) authWrapper.style.display = "flex";
+        this.bindAuthEvents();
+        this.showToast("Signed out successfully");
+      }
     });
 
     // Add Task Modal events
