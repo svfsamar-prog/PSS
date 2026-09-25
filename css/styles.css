@@ -2200,7 +2200,7 @@ body {
     display: flex;
   }
   .app-main {
-    padding: 1.25rem 1rem 5rem;
+    padding: 1.25rem 1rem 5.5rem;
   }
   .readiness-kpis {
     grid-template-columns: repeat(2, 1fr);
@@ -2218,3 +2218,74 @@ body {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+@media (max-width: 600px) {
+  .app-topbar {
+    padding: 0.65rem 1rem;
+  }
+  .brand-sub {
+    display: none;
+  }
+  .welcome-title {
+    font-size: 1.4rem;
+  }
+  .focus-hero-card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1.15rem;
+    gap: 1rem;
+  }
+  .focus-hero-card .btn-primary {
+    width: 100%;
+    justify-content: center;
+  }
+  .readiness-kpis {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.65rem;
+  }
+  .readiness-kpi-card {
+    padding: 0.85rem 0.75rem;
+  }
+  .readiness-kpi-card .kpi-val {
+    font-size: 1.3rem;
+  }
+  .timeline-nodes-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+  .timeline-line-bg {
+    display: none;
+  }
+  .counter-display {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .counter-actions {
+    width: 100%;
+  }
+  .counter-btn {
+    flex: 1;
+    text-align: center;
+  }
+  .skills-table th, .skills-table td {
+    padding: 0.65rem 0.6rem;
+    font-size: 0.78rem;
+  }
+  .auth-card {
+    padding: 2rem 1.5rem;
+  }
+  .btn-primary, .btn-outline, .counter-btn {
+    min-height: 42px;
+  }
+}
+
+@media (max-width: 420px) {
+  .readiness-kpis {
+    grid-template-columns: 1fr;
+  }
+  .career-funnel-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
