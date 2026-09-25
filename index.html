@@ -23,67 +23,89 @@
       <p>Candidate: Samar Raj · BCA (Data Science / AI-ML) · Generated on <span id="printDate"></span></p>
     </div>
 
-    <!-- Top Application Bar -->
+    <!-- Top Application Bar (Modern Quiet-Chrome & Slim Header) -->
     <header class="app-topbar">
-      <!-- Brand Area -->
-      <div class="brand-wrap">
-        <div class="brand-badge">OS</div>
-        <div class="brand-text">
-          <h1>
-            PLACEMENT OS
-            <span class="brand-tag">Sem 3 Active</span>
-          </h1>
-          <div class="brand-sub">Samar Raj · BCA (Data Science / AI-ML)</div>
+      <!-- Left: Mobile Menu Trigger + Brand Badge + Breadcrumb + Cloud Sync Indicator -->
+      <div class="topbar-left">
+        <button class="mobile-menu-btn" id="mobileMenuToggle" aria-label="Toggle navigation menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        <a class="brand-chip" href="#" id="brandHomeBtn" title="Placement OS Home">
+          <div class="brand-badge">
+            <span class="brand-glow"></span>
+            <span class="brand-initials">P/OS</span>
+          </div>
+        </a>
+
+        <div class="topbar-breadcrumb">
+          <span class="breadcrumb-root">Placement OS</span>
+          <span class="breadcrumb-sep">/</span>
+          <span class="breadcrumb-page" id="topbarCurrentView">Dashboard</span>
+          <span class="breadcrumb-pill">Sem 3</span>
+        </div>
+
+        <div class="cloud-sync-pill" id="cloudSyncBadge" title="Live PostgreSQL 17 replication via Supabase Cloud (Project PSS)">
+          <span class="sync-dot"></span>
+          <span class="sync-text">PSS Live</span>
         </div>
       </div>
 
-      <!-- Topbar Navigation Pills -->
-      <nav class="topbar-nav" aria-label="Main Views">
-        <button class="top-nav-btn active" data-nav-view="dashboard">
-          <span>📊</span> Dashboard
+      <!-- Center: Raycast / Linear Command Palette Trigger -->
+      <div class="topbar-center">
+        <button class="command-trigger" id="openCommandPaletteBtn" title="Quick jump or command (⌘K / Ctrl+K)">
+          <span class="cmd-icon">⌘</span>
+          <span class="cmd-text">Quick jump to view or action...</span>
+          <kbd class="cmd-badge">⌘K</kbd>
         </button>
-        <button class="top-nav-btn" data-nav-view="roadmap">
-          <span>🗺️</span> Roadmap
-        </button>
-        <button class="top-nav-btn" data-nav-view="skills">
-          <span>⚡</span> Skills
-        </button>
-        <button class="top-nav-btn" data-nav-view="projects">
-          <span>🚀</span> Projects
-        </button>
-        <button class="top-nav-btn" data-nav-view="practice">
-          <span>💻</span> Practice
-        </button>
-        <button class="top-nav-btn" data-nav-view="career">
-          <span>💼</span> Career
-        </button>
-        <button class="top-nav-btn" data-nav-view="analytics">
-          <span>📈</span> Analytics
-        </button>
-      </nav>
+      </div>
 
-      <!-- Topbar Right Actions -->
-      <div class="topbar-actions">
-        <!-- Supabase Cloud Live Sync Badge -->
-        <div class="user-profile-badge" id="cloudSyncBadge" style="font-size:0.75rem; gap:0.4rem; padding:0.35rem 0.65rem;">
-          <span style="color:var(--accent-green);">🟢</span> <span>Supabase: PSS</span>
+      <!-- Right: Action Buttons + Theme Toggle + User Menu -->
+      <div class="topbar-right">
+        <button class="btn-primary-slim" id="openAddTaskBtn" title="Add a custom placement goal">
+          <span class="plus-icon">＋</span>
+          <span>Goal</span>
+        </button>
+
+        <button class="icon-btn-minimal" id="themeToggleBtn" aria-label="Toggle dark/light theme" title="Toggle theme">
+          <span id="themeToggleIcon">🌙</span>
+        </button>
+
+        <!-- User Profile Dropdown Pill -->
+        <div class="user-dropdown-wrapper">
+          <button class="user-chip" id="userMenuToggleBtn" aria-expanded="false" title="Candidate profile & options">
+            <div class="user-avatar-dot">SR</div>
+            <span class="user-name" id="userProfileName">Samar</span>
+            <span class="user-caret">▾</span>
+          </button>
+
+          <div class="user-dropdown-popover" id="userDropdownMenu">
+            <div class="popover-profile">
+              <div class="popover-name">Samar Raj</div>
+              <div class="popover-role">BCA · Data Science / AI-ML</div>
+            </div>
+            <div class="popover-divider"></div>
+            <button class="popover-item" data-nav-view="targets">
+              <span class="item-icon">🎯</span>
+              <span>Placement Targets</span>
+            </button>
+            <button class="popover-item" data-nav-view="analytics">
+              <span class="item-icon">📈</span>
+              <span>Learning Velocity</span>
+            </button>
+            <button class="popover-item" data-nav-view="export">
+              <span class="item-icon">📥</span>
+              <span>Export & Backup</span>
+            </button>
+            <div class="popover-divider"></div>
+            <button class="popover-item danger" id="signOutBtn">
+              <span class="item-icon">🚪</span>
+              <span>Sign Out</span>
+            </button>
+          </div>
         </div>
-
-        <button class="btn-primary" id="openAddTaskBtn" style="padding:0.4rem 0.8rem; font-size:0.8rem;">
-          <span>＋</span> <span>Add Goal</span>
-        </button>
-        <button class="icon-btn" id="themeToggleBtn" aria-label="Toggle dark/light theme" title="Toggle theme">🌙</button>
-        
-        <!-- User Profile Pill -->
-        <div class="user-profile-badge">
-          <div class="user-avatar">SR</div>
-          <span id="userProfileName">Samar</span>
-        </div>
-
-        <!-- Sign Out Button -->
-        <button class="btn-subtle" id="signOutBtn" style="font-size:0.75rem; color:#C53030;" title="Sign out of Placement OS">
-          Sign Out
-        </button>
       </div>
     </header>
 
@@ -177,6 +199,9 @@
           <button class="action-btn" id="sidebarFocusBtn">Continue Roadmap →</button>
         </div>
       </aside>
+
+      <!-- Mobile Sidebar Backdrop -->
+      <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
       <!-- Main Dynamic Content Panel -->
       <main class="app-main" id="mainContent"></main>
@@ -328,6 +353,28 @@
       <div class="auth-footer">
         <span>🔒</span>
         <span>Secured with Supabase Cloud Auth (Project PSS)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Raycast / Linear Style Command Palette (⌘K / Ctrl+K) -->
+  <div class="command-palette-backdrop" id="commandPaletteModal" style="display: none;">
+    <div class="command-palette-card">
+      <div class="command-palette-search">
+        <span class="cmd-search-icon">🔍</span>
+        <input type="text" id="commandInput" class="command-input" placeholder="Type a view or action... (e.g. 'Roadmap', 'Add Goal', 'DSA')" autocomplete="off">
+        <kbd class="cmd-esc-badge" id="closeCommandPaletteBtn">ESC</kbd>
+      </div>
+      <div class="command-palette-body">
+        <div class="command-group-label" id="commandGroupLabel">Quick Navigation & Actions</div>
+        <div class="command-palette-list" id="commandList">
+          <!-- Populated dynamically by app.js -->
+        </div>
+      </div>
+      <div class="command-palette-footer">
+        <div class="cmd-footer-tip"><span>↑↓</span> to navigate</div>
+        <div class="cmd-footer-tip"><span>↵</span> to select</div>
+        <div class="cmd-footer-tip"><span>ESC</span> to close</div>
       </div>
     </div>
   </div>

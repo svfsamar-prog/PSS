@@ -160,18 +160,30 @@ class PlacementOSApp {
     const el = document.getElementById("cloudSyncBadge");
     if (!el) return;
 
+    const dot = el.querySelector(".sync-dot");
+    const label = el.querySelector(".sync-text");
+
     if (status === "syncing") {
-      el.innerHTML = `<span style="color:#F59E0B;">🔄</span> <span>${text}</span>`;
-      el.style.borderColor = "var(--warn-line)";
-      el.style.backgroundColor = "var(--warn-bg)";
+      if (dot) {
+        dot.style.background = "#F59E0B";
+        dot.style.boxShadow = "0 0 8px rgba(245, 158, 11, 0.7)";
+      }
+      if (label) label.textContent = "Syncing...";
+      el.setAttribute("title", text);
     } else if (status === "connected") {
-      el.innerHTML = `<span style="color:var(--accent-green);">🟢</span> <span>${text}</span>`;
-      el.style.borderColor = "var(--line)";
-      el.style.backgroundColor = "var(--bg-page)";
+      if (dot) {
+        dot.style.background = "#10B981";
+        dot.style.boxShadow = "0 0 8px rgba(16, 185, 129, 0.7)";
+      }
+      if (label) label.textContent = "PSS Live";
+      el.setAttribute("title", text);
     } else {
-      el.innerHTML = `<span style="color:#EF4444;">🔴</span> <span>${text}</span>`;
-      el.style.borderColor = "#FCA5A5";
-      el.style.backgroundColor = "#FEF2F2";
+      if (dot) {
+        dot.style.background = "#EF4444";
+        dot.style.boxShadow = "0 0 8px rgba(239, 68, 68, 0.7)";
+      }
+      if (label) label.textContent = "Offline";
+      el.setAttribute("title", text);
     }
   }
 
@@ -198,7 +210,7 @@ class PlacementOSApp {
   }
 
   bindEvents() {
-    // Navigation (Sidebar + Top bar + Mobile bottom bar)
+    // Navigation (Sidebar + Mobile bottom bar + Brand logo)
     document.querySelectorAll("[data-nav-view]").forEach(btn => {
       btn.addEventListener("click", (e) => {
         const view = e.currentTarget.getAttribute("data-nav-view");
@@ -206,12 +218,97 @@ class PlacementOSApp {
       });
     });
 
+    document.getElementById("brandHomeBtn")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      this.switchView("dashboard");
+    });
+
     // Theme toggle
     this.dom.themeToggleBtn?.addEventListener("click", () => {
       const current = document.documentElement.getAttribute("data-theme");
       const nextTheme = current === "dark" ? "light" : "dark";
       document.documentElement.setAttribute("data-theme", nextTheme);
-      this.dom.themeToggleBtn.innerHTML = nextTheme === "dark" ? "☀️" : "🌙";
+      const icon = document.getElementById("themeToggleIcon");
+      if (icon) icon.textContent = nextTheme === "dark" ? "☀️" : "🌙";
+    });
+
+    // User Profile Dropdown Toggle
+    const userMenuBtn = document.getElementById("userMenuToggleBtn");
+    const userDropdown = document.getElementById("userDropdownMenu");
+    userMenuBtn?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      userDropdown?.classList.toggle("show");
+    });
+
+    window.addEventListener("click", (e) => {
+      if (userDropdown && !userDropdown.contains(e.target) && e.target !== userMenuBtn) {
+        userDropdown.classList.remove("show");
+      }
+    });
+
+    // Mobile Menu Toggle & Drawer
+    const mobileMenuBtn = document.getElementById("mobileMenuToggle");
+    const sidebar = document.querySelector(".app-sidebar");
+    const sidebarBackdrop = document.getElementById("sidebarBackdrop");
+
+    mobileMenuBtn?.addEventListener("click", () => {
+      sidebar?.classList.toggle("mobile-open");
+      sidebarBackdrop?.classList.toggle("show");
+    });
+
+    sidebarBackdrop?.addEventListener("click", () => {
+      sidebar?.classList.remove("mobile-open");
+      sidebarBackdrop?.classList.remove("show");
+    });
+
+    // Command Palette Trigger & Keyboard Listeners (⌘K / Ctrl+K)
+    document.getElementById("openCommandPaletteBtn")?.addEventListener("click", () => this.openCommandPalette());
+    document.getElementById("closeCommandPaletteBtn")?.addEventListener("click", () => this.closeCommandPalette());
+    document.getElementById("commandPaletteModal")?.addEventListener("click", (e) => {
+      if (e.target.id === "commandPaletteModal") this.closeCommandPalette();
+    });
+
+    document.getElementById("commandInput")?.addEventListener("input", (e) => {
+      this.cmdSelectedIndex = 0;
+      this.renderCommandList(e.target.value);
+    });
+
+    window.addEventListener("keydown", (e) => {
+      // ⌘K or Ctrl+K
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        const modal = document.getElementById("commandPaletteModal");
+        if (modal && modal.style.display !== "none") {
+          this.closeCommandPalette();
+        } else {
+          this.openCommandPalette();
+        }
+        return;
+      }
+
+      // If Command Palette is open
+      const modal = document.getElementById("commandPaletteModal");
+      if (modal && modal.style.display !== "none") {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          this.closeCommandPalette();
+        } else if (e.key === "ArrowDown") {
+          e.preventDefault();
+          if (this.filteredCmdItems && this.filteredCmdItems.length > 0) {
+            this.cmdSelectedIndex = (this.cmdSelectedIndex + 1) % this.filteredCmdItems.length;
+            this.updateCommandSelectionHighlight();
+          }
+        } else if (e.key === "ArrowUp") {
+          e.preventDefault();
+          if (this.filteredCmdItems && this.filteredCmdItems.length > 0) {
+            this.cmdSelectedIndex = (this.cmdSelectedIndex - 1 + this.filteredCmdItems.length) % this.filteredCmdItems.length;
+            this.updateCommandSelectionHighlight();
+          }
+        } else if (e.key === "Enter") {
+          e.preventDefault();
+          this.executeCommand(this.cmdSelectedIndex);
+        }
+      }
     });
 
     // Sidebar Focus CTA
@@ -253,6 +350,113 @@ class PlacementOSApp {
       e.preventDefault();
       this.handleAddAppSubmit();
     });
+  }
+
+  /* ==========================================================================
+     Raycast / Linear Style Command Palette (⌘K)
+     ========================================================================== */
+  openCommandPalette() {
+    const modal = document.getElementById("commandPaletteModal");
+    const input = document.getElementById("commandInput");
+    if (!modal || !input) return;
+
+    modal.style.display = "flex";
+    input.value = "";
+    input.focus();
+    this.cmdSelectedIndex = 0;
+    this.renderCommandList("");
+  }
+
+  closeCommandPalette() {
+    const modal = document.getElementById("commandPaletteModal");
+    if (modal) modal.style.display = "none";
+  }
+
+  getCommandPaletteItems() {
+    return [
+      { id: "v_dash", type: "view", title: "Go to Dashboard", icon: "📊", tag: "View", action: () => this.switchView("dashboard") },
+      { id: "v_road", type: "view", title: "Curriculum Roadmap (Sem 3 → Sem 6)", icon: "🗺️", tag: "View", action: () => this.switchView("roadmap") },
+      { id: "v_skill", type: "view", title: "Skills Matrix & Mastery Index", icon: "⚡", tag: "View", action: () => this.switchView("skills") },
+      { id: "v_proj", type: "view", title: "Portfolio Projects Deck (4 Production Apps)", icon: "🚀", tag: "View", action: () => this.switchView("projects") },
+      { id: "v_prac", type: "view", title: "DSA & SQL Practice Tracker", icon: "💻", tag: "View", action: () => this.switchView("practice") },
+      { id: "v_car", type: "view", title: "Career Applications CRM", icon: "💼", tag: "View", action: () => this.switchView("career") },
+      { id: "v_ana", type: "view", title: "Learning Analytics & Study Velocity", icon: "📈", tag: "View", action: () => this.switchView("analytics") },
+      { id: "v_rhy", type: "view", title: "Weekly Rhythm & Routine", icon: "📅", tag: "View", action: () => this.switchView("rhythm") },
+      { id: "v_tar", type: "view", title: "Placement Target Roles & Tiers", icon: "🎯", tag: "View", action: () => this.switchView("targets") },
+      { id: "v_exp", type: "view", title: "Backup Data & Cloud Export", icon: "📥", tag: "View", action: () => this.switchView("export") },
+      { id: "a_goal", type: "action", title: "Add Custom Placement Goal", icon: "＋", tag: "Action", action: () => { this.closeCommandPalette(); this.openAddTaskModal(); } },
+      { id: "a_app", type: "action", title: "Log Job / Internship Application", icon: "📝", tag: "Action", action: () => { this.closeCommandPalette(); this.openAddAppModal(); } },
+      { id: "a_theme", type: "action", title: "Toggle Dark / Light Theme", icon: "🌓", tag: "Theme", action: () => { 
+          const current = document.documentElement.getAttribute("data-theme");
+          const next = current === "dark" ? "light" : "dark";
+          document.documentElement.setAttribute("data-theme", next);
+          const icon = document.getElementById("themeToggleIcon");
+          if (icon) icon.textContent = next === "dark" ? "☀️" : "🌙";
+          this.closeCommandPalette();
+        } 
+      },
+      { id: "a_out", type: "action", title: "Sign Out of Placement OS", icon: "🚪", tag: "Auth", action: () => {
+          this.closeCommandPalette();
+          document.getElementById("signOutBtn")?.click();
+        } 
+      }
+    ];
+  }
+
+  renderCommandList(query = "") {
+    const listEl = document.getElementById("commandList");
+    if (!listEl) return;
+
+    const q = query.toLowerCase().trim();
+    const items = this.getCommandPaletteItems().filter(item => {
+      if (!q) return true;
+      return item.title.toLowerCase().includes(q) || item.tag.toLowerCase().includes(q);
+    });
+
+    if (items.length === 0) {
+      listEl.innerHTML = `<div style="padding:1.5rem; text-align:center; color:var(--ink-muted); font-size:0.85rem;">No matching views or actions found</div>`;
+      this.filteredCmdItems = [];
+      return;
+    }
+
+    if (this.cmdSelectedIndex >= items.length) {
+      this.cmdSelectedIndex = 0;
+    }
+
+    this.filteredCmdItems = items;
+
+    listEl.innerHTML = items.map((item, idx) => `
+      <button class="cmd-item ${idx === this.cmdSelectedIndex ? 'selected' : ''}" data-cmd-index="${idx}">
+        <div class="cmd-item-left">
+          <span class="cmd-item-icon">${item.icon}</span>
+          <span>${item.title}</span>
+        </div>
+        <span class="cmd-item-tag">${item.tag}</span>
+      </button>
+    `).join("");
+
+    listEl.querySelectorAll(".cmd-item").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const idx = parseInt(btn.getAttribute("data-cmd-index"), 10);
+        this.executeCommand(idx);
+      });
+    });
+  }
+
+  updateCommandSelectionHighlight() {
+    const listEl = document.getElementById("commandList");
+    if (!listEl) return;
+    listEl.querySelectorAll(".cmd-item").forEach((btn, idx) => {
+      btn.classList.toggle("selected", idx === this.cmdSelectedIndex);
+    });
+  }
+
+  executeCommand(idx) {
+    if (this.filteredCmdItems && this.filteredCmdItems[idx]) {
+      const item = this.filteredCmdItems[idx];
+      this.closeCommandPalette();
+      item.action();
+    }
   }
 
   /* ==========================================================================
@@ -350,6 +554,30 @@ class PlacementOSApp {
       const isTarget = btn.getAttribute("data-nav-view") === viewName;
       btn.classList.toggle("active", isTarget);
     });
+
+    const topbarViewEl = document.getElementById("topbarCurrentView");
+    if (topbarViewEl) {
+      const viewNames = {
+        dashboard: "Dashboard",
+        roadmap: "Curriculum Roadmap",
+        skills: "Skills Matrix",
+        projects: "Portfolio Projects",
+        practice: "DSA & SQL Practice",
+        career: "Career CRM",
+        analytics: "Learning Analytics",
+        rhythm: "Weekly Rhythm",
+        targets: "Placement Targets",
+        export: "Backup & Cloud Export"
+      };
+      topbarViewEl.textContent = viewNames[viewName] || "Dashboard";
+    }
+
+    // Close mobile drawer if open
+    document.querySelector(".app-sidebar")?.classList.remove("mobile-open");
+    document.getElementById("sidebarBackdrop")?.classList.remove("show");
+
+    // Close user dropdown popover if open
+    document.getElementById("userDropdownMenu")?.classList.remove("show");
 
     this.render();
     window.scrollTo({ top: 0, behavior: "smooth" });
