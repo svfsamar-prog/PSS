@@ -65,18 +65,10 @@ class PlacementOSApp {
     const togglePwdBtn = document.getElementById("togglePwdBtn");
     const pwdInput = document.getElementById("loginPassword");
     const emailInput = document.getElementById("loginEmail");
-    const autofillBtn = document.getElementById("autofillLoginBtn");
-
     togglePwdBtn?.addEventListener("click", () => {
       const type = pwdInput.getAttribute("type") === "password" ? "text" : "password";
       pwdInput.setAttribute("type", type);
       togglePwdBtn.textContent = type === "password" ? "👁️" : "🙈";
-    });
-
-    autofillBtn?.addEventListener("click", () => {
-      emailInput.value = "samarrajxyz@gmail.com";
-      pwdInput.value = "Samar@9841@raj";
-      this.showToast("Credentials autofilled!");
     });
 
     form?.addEventListener("submit", async (e) => {
