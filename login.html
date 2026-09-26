@@ -1,0 +1,1408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In · Water-Morphic Experience</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+
+  <style>
+    /* ==========================================================================
+       DESIGN SYSTEM & COLOR TOKENS
+       ========================================================================== */
+    :root {
+      --bg-start: #EAF4FF;
+      --bg-mid:   #F0F7FF;
+      --bg-end:   #F7F9FC;
+      --card-bg:  rgba(255, 255, 255, 0.85);
+      --card-border: rgba(255, 255, 255, 0.95);
+      --border:   rgba(0, 0, 0, 0.08);
+      --border-focus: #3B82F6;
+      --text:     #1A1F2B;
+      --text-muted: #6B7280;
+      --text-light: #9CA3AF;
+      --accent:   #3B82F6;       /* primary blue */
+      --accent-2: #22D3EE;       /* teal secondary */
+      --accent-glow: rgba(34, 211, 238, 0.35);
+      --shadow:   rgba(59, 130, 246, 0.16); /* soft blue-tinted shadow */
+      --shadow-deep: rgba(30, 64, 175, 0.12);
+      --input-bg: rgba(243, 246, 250, 0.8);
+      --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --spring-easing: cubic-bezier(0.34, 1.56, 0.64, 1);
+      --water-easing: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      color: var(--text);
+      min-height: 100vh;
+      background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-mid) 40%, #FAF5FF 70%, var(--bg-end) 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      position: relative;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ==========================================================================
+       LIQUID BACKGROUND CANVAS & FLOATING WATER ORBS
+       ========================================================================== */
+    .water-background {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .caustic-overlay {
+      position: absolute;
+      inset: 0;
+      background: 
+        radial-gradient(ellipse at 20% 20%, rgba(34, 211, 238, 0.12) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(59, 130, 246, 0.14) 0%, transparent 55%),
+        radial-gradient(ellipse at 50% 50%, rgba(192, 132, 252, 0.08) 0%, transparent 60%);
+      opacity: 0.9;
+      animation: causticShift 14s ease-in-out infinite alternate;
+    }
+
+    @keyframes causticShift {
+      0% { transform: scale(1) translate(0, 0); }
+      50% { transform: scale(1.05) translate(-15px, 20px); }
+      100% { transform: scale(1.02) translate(20px, -15px); }
+    }
+
+    .water-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(65px);
+      will-change: transform;
+      opacity: 0.75;
+      mix-blend-mode: multiply;
+      transition: transform 0.4s var(--water-easing);
+    }
+
+    .orb-1 {
+      width: 480px;
+      height: 480px;
+      top: -120px;
+      left: -80px;
+      background: radial-gradient(circle, rgba(56, 189, 248, 0.45) 0%, rgba(59, 130, 246, 0.15) 70%, transparent 100%);
+      animation: driftOrb1 16s ease-in-out infinite alternate;
+    }
+
+    .orb-2 {
+      width: 540px;
+      height: 540px;
+      bottom: -150px;
+      right: -100px;
+      background: radial-gradient(circle, rgba(165, 243, 252, 0.55) 0%, rgba(34, 211, 238, 0.2) 70%, transparent 100%);
+      animation: driftOrb2 20s ease-in-out infinite alternate;
+    }
+
+    .orb-3 {
+      width: 380px;
+      height: 380px;
+      top: 45%;
+      right: 18%;
+      background: radial-gradient(circle, rgba(192, 132, 252, 0.25) 0%, rgba(221, 214, 254, 0.1) 70%, transparent 100%);
+      animation: driftOrb3 18s ease-in-out infinite alternate;
+    }
+
+    .orb-4 {
+      width: 320px;
+      height: 320px;
+      bottom: 20%;
+      left: 15%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.9) 0%, rgba(186, 230, 253, 0.4) 60%, transparent 100%);
+      animation: pulseGlow 8s ease-in-out infinite alternate;
+    }
+
+    @keyframes driftOrb1 {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(60px, 80px) scale(1.12); }
+    }
+
+    @keyframes driftOrb2 {
+      0% { transform: translate(0, 0) scale(1.05); }
+      100% { transform: translate(-80px, -60px) scale(0.95); }
+    }
+
+    @keyframes driftOrb3 {
+      0% { transform: translate(0, 0) scale(0.9); }
+      100% { transform: translate(-40px, 50px) scale(1.15); }
+    }
+
+    @keyframes pulseGlow {
+      0% { transform: scale(0.95); opacity: 0.6; }
+      100% { transform: scale(1.18); opacity: 0.9; }
+    }
+
+    /* ==========================================================================
+       TOP APP HEADER
+       ========================================================================== */
+    .app-header {
+      position: absolute;
+      top: 1.75rem;
+      left: 2rem;
+      right: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 10;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: var(--text);
+    }
+
+    .brand-droplet-badge {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(240, 249, 255, 0.8));
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 20px var(--shadow), inset 0 1px 2px rgba(255, 255, 255, 1);
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.3s var(--spring-easing), border-radius 0.4s ease;
+    }
+
+    .brand-droplet-badge:hover {
+      transform: translateY(-2px) scale(1.05);
+      border-radius: 18px 10px 18px 10px;
+    }
+
+    .brand-name {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .brand-pill {
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--accent);
+      background: rgba(59, 130, 246, 0.1);
+      padding: 0.15rem 0.5rem;
+      border-radius: 9999px;
+      border: 1px solid rgba(59, 130, 246, 0.18);
+    }
+
+    .header-links {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .header-link-pill {
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-decoration: none;
+      padding: 0.45rem 0.9rem;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 12px var(--shadow);
+      transition: all 0.25s var(--water-easing);
+    }
+
+    .header-link-pill:hover {
+      color: var(--accent);
+      background: rgba(255, 255, 255, 0.9);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(59, 130, 246, 0.22);
+    }
+
+    /* ==========================================================================
+       WATER-MORPHIC FLOATING CARD (SURFACING ANIMATION)
+       ========================================================================== */
+    .login-container {
+      position: relative;
+      z-index: 5;
+      width: 100%;
+      max-width: 920px;
+      margin: 4.5rem auto 1.5rem;
+    }
+
+    .water-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(28px) saturate(190%);
+      -webkit-backdrop-filter: blur(28px) saturate(190%);
+      border: 1px solid var(--card-border);
+      border-radius: 28px;
+      box-shadow: 
+        0 24px 60px -12px var(--shadow),
+        0 8px 24px -4px var(--shadow-deep),
+        inset 0 1px 2px rgba(255, 255, 255, 0.95),
+        inset 0 -1px 2px rgba(59, 130, 246, 0.05);
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      position: relative;
+      transform: translateY(0) scale(1);
+      animation: waterCardSurfacing 0.9s var(--spring-easing) forwards;
+      will-change: transform, opacity;
+    }
+
+    @keyframes waterCardSurfacing {
+      0% {
+        opacity: 0;
+        transform: translateY(32px) scale(0.94);
+        filter: blur(8px);
+      }
+      70% {
+        opacity: 1;
+        transform: translateY(-4px) scale(1.01);
+        filter: blur(0);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+      }
+    }
+
+    /* Subtle interactive 3D tilt reflection */
+    .water-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at var(--mouse-card-x, 50%) var(--mouse-card-y, 30%), rgba(255, 255, 255, 0.5) 0%, transparent 60%);
+      pointer-events: none;
+      opacity: 0.6;
+      transition: opacity 0.3s ease;
+    }
+
+    /* ==========================================================================
+       LEFT PANEL: EMAIL/PASSWORD FORM
+       ========================================================================== */
+    .form-panel {
+      padding: 3.25rem 3rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    .form-header {
+      margin-bottom: 2rem;
+    }
+
+    .form-title {
+      font-size: 1.95rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      line-height: 1.15;
+      margin-bottom: 0.45rem;
+    }
+
+    .form-subtitle {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .auth-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.4rem;
+    }
+
+    /* Floating label water-morphic input container */
+    .input-field-wrap {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .input-outer-shell {
+      position: relative;
+      border-radius: 14px;
+      background: var(--input-bg);
+      border: 1.5px solid rgba(0, 0, 0, 0.07);
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.03);
+      transition: 
+        border-color 0.3s ease, 
+        border-radius 0.45s var(--spring-easing),
+        background-color 0.3s ease,
+        box-shadow 0.45s var(--spring-easing);
+      overflow: hidden;
+    }
+
+    /* Water ripple pulse canvas on focus */
+    .input-ripple-wave {
+      position: absolute;
+      top: var(--ripple-y, 50%);
+      left: var(--ripple-x, 50%);
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(34, 211, 238, 0.3) 0%, rgba(59, 130, 246, 0.15) 60%, transparent 100%);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    .input-field-wrap.focused .input-ripple-wave {
+      animation: waterRippleExpand 0.6s ease-out forwards;
+    }
+
+    @keyframes waterRippleExpand {
+      0% {
+        width: 0;
+        height: 0;
+        opacity: 0.8;
+      }
+      100% {
+        width: 320px;
+        height: 320px;
+        opacity: 0;
+      }
+    }
+
+    /* Organic breathing border-radius on focus */
+    .input-field-wrap.focused .input-outer-shell {
+      border-color: var(--border-focus);
+      background-color: rgba(255, 255, 255, 0.95);
+      border-radius: 17px 13px 16px 14px;
+      box-shadow: 
+        0 8px 24px -4px var(--shadow),
+        0 0 0 3px rgba(59, 130, 246, 0.15),
+        inset 0 1px 2px rgba(255, 255, 255, 1);
+    }
+
+    .input-inner {
+      width: 100%;
+      height: 54px;
+      padding: 1.35rem 1rem 0.35rem;
+      border: none;
+      outline: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--text);
+      z-index: 2;
+      position: relative;
+    }
+
+    .input-inner::placeholder {
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .input-inner:focus::placeholder {
+      opacity: 0.45;
+    }
+
+    /* Organic Floating Label */
+    .floating-label {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      pointer-events: none;
+      transition: all 0.25s var(--water-easing);
+      z-index: 3;
+      transform-origin: left top;
+    }
+
+    .input-field-wrap.has-value .floating-label,
+    .input-field-wrap.focused .floating-label {
+      top: 0.45rem;
+      transform: translateY(0) scale(0.75);
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    /* Password visibility toggle button */
+    .pwd-toggle-btn {
+      position: absolute;
+      right: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 0.4rem;
+      border-radius: 8px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 4;
+      transition: color 0.2s ease, transform 0.25s var(--spring-easing), background 0.2s ease;
+    }
+
+    .pwd-toggle-btn:hover {
+      color: var(--text);
+      background: rgba(0, 0, 0, 0.04);
+      transform: translateY(-50%) scale(1.1);
+    }
+
+    /* Options bar (Remember + Forgot Password) */
+    .form-options-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: -0.25rem;
+      font-size: 0.84rem;
+    }
+
+    .remember-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .water-checkbox {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 6px;
+      border: 1.5px solid rgba(0, 0, 0, 0.18);
+      background: var(--input-bg);
+      cursor: pointer;
+      display: grid;
+      place-content: center;
+      transition: all 0.3s var(--spring-easing);
+      position: relative;
+    }
+
+    .water-checkbox:checked {
+      background: linear-gradient(135deg, var(--accent-2), var(--accent));
+      border-color: var(--accent);
+      border-radius: 8px 5px 7px 6px;
+      box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+    }
+
+    .water-checkbox:checked::before {
+      content: '';
+      width: 5px;
+      height: 9px;
+      border: solid #FFFFFF;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+      margin-bottom: 2px;
+    }
+
+    .forgot-link {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+      position: relative;
+      transition: color 0.2s ease;
+    }
+
+    .forgot-link::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 0;
+      height: 1.5px;
+      background: linear-gradient(90deg, var(--accent-2), var(--accent));
+      transition: width 0.3s var(--water-easing);
+      border-radius: 9999px;
+    }
+
+    .forgot-link:hover::after {
+      width: 100%;
+    }
+
+    /* ==========================================================================
+       WATER WOBBLE PRIMARY BUTTON (BASELINE + SVG LIQUID UPGRADE)
+       ========================================================================== */
+    .button-filter-wrap {
+      position: relative;
+      width: 100%;
+      margin-top: 0.5rem;
+    }
+
+    .btn-liquid-login {
+      width: 100%;
+      height: 52px;
+      border: none;
+      outline: none;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.98rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: #FFFFFF;
+      background: linear-gradient(135deg, #22D3EE 0%, #3B82F6 100%);
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      box-shadow: 
+        0 12px 28px -6px rgba(59, 130, 246, 0.42),
+        0 4px 12px rgba(34, 211, 238, 0.28),
+        inset 0 1px 2px rgba(255, 255, 255, 0.4);
+      transform: scale(1) translateZ(0);
+      transition: 
+        transform 0.45s var(--spring-easing),
+        box-shadow 0.35s ease,
+        border-radius 0.5s var(--spring-easing);
+      will-change: transform, border-radius;
+      user-select: none;
+    }
+
+    /* Hover State: fluid expansion */
+    .btn-liquid-login:hover {
+      transform: translateY(-2px) scale(1.015);
+      border-radius: 20px 14px 22px 15px;
+      box-shadow: 
+        0 16px 36px -6px rgba(59, 130, 246, 0.55),
+        0 6px 18px rgba(34, 211, 238, 0.38),
+        inset 0 1px 2px rgba(255, 255, 255, 0.6);
+    }
+
+    /* Active / Mousedown State: Asymmetric droplet deformation */
+    .btn-liquid-login:active,
+    .btn-liquid-login.deforming {
+      transform: scale(0.96) translateY(1px);
+      border-radius: 26px 8px 24px 10px;
+      box-shadow: 
+        0 6px 16px -2px rgba(59, 130, 246, 0.4),
+        inset 0 2px 4px rgba(0, 0, 0, 0.1);
+      transition: transform 0.15s ease, border-radius 0.2s ease;
+    }
+
+    /* Dynamic Radial Ripple on Click */
+    .button-ripple {
+      position: absolute;
+      top: var(--btn-ripple-y, 50%);
+      left: var(--btn-ripple-x, 50%);
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.75) 0%, rgba(255, 255, 255, 0.25) 50%, transparent 80%);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    .btn-liquid-login.ripple-active .button-ripple {
+      animation: buttonWaterRipple 0.65s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+    }
+
+    @keyframes buttonWaterRipple {
+      0% {
+        width: 0;
+        height: 0;
+        opacity: 0.9;
+      }
+      100% {
+        width: 440px;
+        height: 440px;
+        opacity: 0;
+      }
+    }
+
+    /* Surface sheen reflection */
+    .btn-liquid-login::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.28), transparent);
+      transform: skewX(-25deg);
+      transition: left 0.75s ease;
+    }
+
+    .btn-liquid-login:hover::before {
+      left: 150%;
+    }
+
+    .btn-icon-arrow {
+      transition: transform 0.3s var(--spring-easing);
+    }
+
+    .btn-liquid-login:hover .btn-icon-arrow {
+      transform: translateX(4px);
+    }
+
+    /* Register Footer Link */
+    .register-footer {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    .register-link {
+      color: var(--accent);
+      font-weight: 700;
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .register-link:hover {
+      text-decoration: underline;
+    }
+
+    /* ==========================================================================
+       VERTICAL DIVIDER (DESKTOP)
+       ========================================================================== */
+    .card-divider {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .divider-line {
+      width: 1px;
+      height: 75%;
+      background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.08) 25%, rgba(0, 0, 0, 0.08) 75%, transparent 100%);
+    }
+
+    .divider-pill {
+      position: absolute;
+      padding: 0.35rem 0.65rem;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      border-radius: 9999px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      box-shadow: 0 4px 12px var(--shadow);
+    }
+
+    /* ==========================================================================
+       RIGHT PANEL: QR CODE & PASSKEY AUTH
+       ========================================================================== */
+    .qr-panel {
+      padding: 3.25rem 2.75rem;
+      background: rgba(248, 251, 255, 0.45);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      position: relative;
+    }
+
+    .qr-tile-container {
+      position: relative;
+      margin-bottom: 1.5rem;
+    }
+
+    .qr-water-tile {
+      background: #FFFFFF;
+      padding: 1.25rem;
+      border-radius: 22px;
+      box-shadow: 
+        0 14px 34px -4px var(--shadow),
+        0 4px 12px rgba(0, 0, 0, 0.04),
+        inset 0 1px 2px rgba(255, 255, 255, 1);
+      border: 1.5px solid rgba(255, 255, 255, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: transform 0.4s var(--spring-easing), border-radius 0.45s ease, box-shadow 0.35s ease;
+      cursor: pointer;
+    }
+
+    .qr-water-tile:hover {
+      transform: translateY(-4px) scale(1.03);
+      border-radius: 26px 16px 26px 16px;
+      box-shadow: 0 20px 42px -6px rgba(59, 130, 246, 0.28);
+    }
+
+    .qr-code-svg {
+      width: 148px;
+      height: 148px;
+      display: block;
+    }
+
+    /* Active scanner line simulation */
+    .qr-scanner-line {
+      position: absolute;
+      left: 1.25rem;
+      right: 1.25rem;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent-2), var(--accent), transparent);
+      box-shadow: 0 0 12px var(--accent-2);
+      top: 1.25rem;
+      animation: scanLaser 3.2s ease-in-out infinite alternate;
+      border-radius: 9999px;
+      pointer-events: none;
+    }
+
+    @keyframes scanLaser {
+      0% { top: 1.25rem; opacity: 0.3; }
+      50% { opacity: 1; }
+      100% { top: calc(100% - 1.25rem); opacity: 0.3; }
+    }
+
+    .qr-title {
+      font-size: 1.15rem;
+      font-weight: 750;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      margin-bottom: 0.4rem;
+    }
+
+    .qr-copy {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+      max-width: 240px;
+      margin-bottom: 1.5rem;
+    }
+
+    .passkey-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      padding: 0.6rem 1.1rem;
+      border-radius: 12px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+      text-decoration: none;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 14px rgba(59, 130, 246, 0.08);
+      transition: all 0.3s var(--spring-easing);
+    }
+
+    .passkey-btn:hover {
+      background: #FFFFFF;
+      color: var(--accent);
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(59, 130, 246, 0.18);
+    }
+
+    /* ==========================================================================
+       TOAST NOTIFICATION (FLUID BUBBLE)
+       ========================================================================== */
+    .water-toast {
+      position: fixed;
+      bottom: 2rem;
+      background: rgba(26, 31, 43, 0.92);
+      color: #FFFFFF;
+      backdrop-filter: blur(16px);
+      padding: 0.75rem 1.25rem;
+      border-radius: 14px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.25);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      transform: translateY(100px) scale(0.9);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.4s var(--spring-easing);
+      z-index: 100;
+    }
+
+    .water-toast.show {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+
+    /* ==========================================================================
+       ACCESSIBILITY & PREFERS-REDUCED-MOTION
+       ========================================================================== */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      .water-card {
+        animation: none !important;
+      }
+      .caustic-overlay, .water-orb, .qr-scanner-line {
+        animation: none !important;
+      }
+    }
+
+    /* ==========================================================================
+       RESPONSIVE BREAKPOINTS
+       ========================================================================== */
+    @media (max-width: 840px) {
+      .water-card {
+        grid-template-columns: 1fr;
+        border-radius: 24px;
+        margin: 4.5rem auto 1rem;
+      }
+
+      .form-panel {
+        padding: 2.5rem 1.75rem;
+      }
+
+      .card-divider {
+        display: none;
+      }
+
+      .qr-panel {
+        padding: 2rem 1.75rem 2.5rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.06);
+      }
+
+      .app-header {
+        left: 1.25rem;
+        right: 1.25rem;
+        top: 1.25rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background Water Canvas & Caustic Drift Orbs -->
+  <div class="water-background" aria-hidden="true">
+    <div class="caustic-overlay"></div>
+    <div class="water-orb orb-1" id="orb1"></div>
+    <div class="water-orb orb-2" id="orb2"></div>
+    <div class="water-orb orb-3" id="orb3"></div>
+    <div class="water-orb orb-4" id="orb4"></div>
+  </div>
+
+  <!-- SVG Filter for Liquid Edge Displacement (Feature-checked & optional upgrade) -->
+  <svg style="position: absolute; width: 0; height: 0; pointer-events: none;" aria-hidden="true">
+    <defs>
+      <filter id="waterWobbleFilter" x="-15%" y="-15%" width="130%" height="130%">
+        <feTurbulence id="liquidTurbulence" type="fractalNoise" baseFrequency="0" numOctaves="2" result="noise" />
+        <feDisplacementMap id="liquidDisplacement" in="SourceGraphic" in2="noise" scale="0" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
+    </defs>
+  </svg>
+
+  <!-- Top App Header -->
+  <header class="app-header">
+    <a href="#" class="brand-group" aria-label="Aquaflow Home">
+      <div class="brand-droplet-badge">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #3B82F6;">
+          <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" fill="url(#brandDropletGrad)"/>
+          <defs>
+            <linearGradient id="brandDropletGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#22D3EE" stop-opacity="0.3"/>
+              <stop offset="100%" stop-color="#3B82F6" stop-opacity="0.75"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div class="brand-name">
+        <span>Placement OS</span>
+        <span class="brand-pill">Water-Morphic</span>
+      </div>
+    </a>
+
+    <div class="header-links">
+      <a href="index.html" class="header-link-pill">
+        <span>Open Dashboard →</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Surfacing Login Glass Card -->
+  <main class="login-container">
+    <div class="water-card" id="waterCard">
+
+      <!-- Left Column: Primary Email / Password Form -->
+      <section class="form-panel">
+        <div class="form-header">
+          <h1 class="form-title">Welcome back!</h1>
+          <p class="form-subtitle">Enter your credentials to access your personal academic analytics and career roadmap.</p>
+        </div>
+
+        <form class="auth-form" id="liquidLoginForm" novalidate>
+
+          <!-- Email or Phone Field -->
+          <div class="input-field-wrap" id="wrapEmail">
+            <div class="input-outer-shell">
+              <div class="input-ripple-wave"></div>
+              <label for="inputEmail" class="floating-label">Email or phone number</label>
+              <input 
+                type="text" 
+                id="inputEmail" 
+                class="input-inner" 
+                placeholder="name@example.com" 
+                autocomplete="username" 
+                required
+              >
+            </div>
+          </div>
+
+          <!-- Password Field -->
+          <div class="input-field-wrap" id="wrapPassword">
+            <div class="input-outer-shell">
+              <div class="input-ripple-wave"></div>
+              <label for="inputPassword" class="floating-label">Password</label>
+              <input 
+                type="password" 
+                id="inputPassword" 
+                class="input-inner" 
+                placeholder="••••••••••••" 
+                autocomplete="current-password" 
+                required
+              >
+              <button 
+                type="button" 
+                class="pwd-toggle-btn" 
+                id="pwdToggleBtn" 
+                aria-label="Toggle password visibility"
+                title="Show/Hide password"
+              >
+                <!-- Eye Open SVG -->
+                <svg class="eye-icon eye-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <!-- Eye Closed SVG -->
+                <svg class="eye-icon eye-closed" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Options Row -->
+          <div class="form-options-bar">
+            <label class="remember-label">
+              <input type="checkbox" class="water-checkbox" id="rememberMe">
+              <span>Remember me</span>
+            </label>
+            <a href="#" class="forgot-link" id="forgotPwdLink">Forgot password?</a>
+          </div>
+
+          <!-- Water Wobble Primary Button -->
+          <div class="button-filter-wrap">
+            <button type="submit" class="btn-liquid-login" id="loginBtn">
+              <span class="button-ripple"></span>
+              <span class="btn-text">Log In</span>
+              <svg class="btn-icon-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <polyline points="12 5 19 12 12 19"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Register Link -->
+          <div class="register-footer">
+            <span>Need an account? </span>
+            <a href="#" class="register-link" id="registerLink">Register</a>
+          </div>
+
+        </form>
+      </section>
+
+      <!-- Vertical Liquid Divider (Desktop) -->
+      <div class="card-divider" aria-hidden="true">
+        <div class="divider-line"></div>
+        <div class="divider-pill">OR</div>
+      </div>
+
+      <!-- Right Column: Light Mode QR Code & Passkey Login -->
+      <section class="qr-panel">
+        <div class="qr-tile-container">
+          <div class="qr-water-tile" id="qrTile" title="Click to refresh QR Code">
+            <div class="qr-scanner-line"></div>
+            <!-- Clean SVG QR Code (Light Mode Contrast) -->
+            <svg class="qr-code-svg" viewBox="0 0 148 148" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="148" height="148" rx="8" fill="white"/>
+              <!-- Top-Left Finder -->
+              <rect x="12" y="12" width="36" height="36" rx="4" fill="#1A1F2B"/>
+              <rect x="18" y="18" width="24" height="24" rx="2" fill="white"/>
+              <rect x="23" y="23" width="14" height="14" rx="2" fill="#3B82F6"/>
+              
+              <!-- Top-Right Finder -->
+              <rect x="100" y="12" width="36" height="36" rx="4" fill="#1A1F2B"/>
+              <rect x="106" y="18" width="24" height="24" rx="2" fill="white"/>
+              <rect x="111" y="23" width="14" height="14" rx="2" fill="#3B82F6"/>
+
+              <!-- Bottom-Left Finder -->
+              <rect x="12" y="100" width="36" height="36" rx="4" fill="#1A1F2B"/>
+              <rect x="18" y="106" width="24" height="24" rx="2" fill="white"/>
+              <rect x="23" y="111" width="14" height="14" rx="2" fill="#3B82F6"/>
+
+              <!-- QR Data Grid Nodes -->
+              <rect x="56" y="14" width="8" height="8" rx="2" fill="#1A1F2B"/>
+              <rect x="70" y="14" width="8" height="8" rx="2" fill="#1A1F2B"/>
+              <rect x="84" y="14" width="8" height="8" rx="2" fill="#22D3EE"/>
+              <rect x="56" y="28" width="8" height="8" rx="2" fill="#1A1F2B"/>
+              <rect x="70" y="32" width="8" height="8" rx="2" fill="#3B82F6"/>
+              <rect x="84" y="28" width="8" height="8" rx="2" fill="#1A1F2B"/>
+              <rect x="56" y="42" width="8" height="8" rx="2" fill="#22D3EE"/>
+              <rect x="70" y="46" width="8" height="8" rx="2" fill="#1A1F2B"/>
+              <rect x="14" y="56" width="8" height="8" rx="2" fill="#1A1F2B"/>
+              <rect x="28" y="56" width="8" height="8" rx="2" fill="#3B82F6"/>
+              <rect x="42" y="56" width="8" height="8" rx="2" fill="#1A1F2B"/>
+              <rect x="56" y="56" width="8" height="8" rx="2" fill="#1A1F2B"/>
+              <rect x="70" y="60" width="8" height="8" rx="2" fill="#22D3EE"/>
+              <rect x="84" y="56" width="8" height="8" rx="2" fill="#1A1F2B"/>
+              <rect x="98" y="56" width="8" height="8" rx="2" fill="#1A1F2B"/>
+              <rect x="112" y="56" width="8" height="8" rx="2" fill="#3B82F6"/>
+              <rect x="126" y="56" width="8" height="8" rx="2" fill="#1A1F2B"/>
+              <rect x="56" y="70" width="8" height="8" rx="2" fill="#3B82F6"/>
+              <rect x="70" y="74" width="8" height="8" rx="2" fill="#1A1F2B"/>
+              <rect x="84" y="70" width="8" height="8" rx="2" fill="#1A1F2B"/>
+              <rect x="98" y="70" width="8" height="8" rx="2" fill="#22D3EE"/>
+              <rect x="56" y="84" width="8" height="8" rx="2" fill="#1A1F2B"/>
+              <rect x="70" y="88" width="8" height="8" rx="2" fill="#1A1F2B"/>
+              <rect x="84" y="84" width="8" height="8" rx="2" fill="#3B82F6"/>
+              <rect x="56" y="98" width="8" height="8" rx="2" fill="#22D3EE"/>
+              <rect x="70" y="102" width="8" height="8" rx="2" fill="#1A1F2B"/>
+              <rect x="84" y="98" width="8" height="8" rx="2" fill="#1A1F2B"/>
+              <rect x="98" y="98" width="8" height="8" rx="2" fill="#1A1F2B"/>
+              <rect x="112" y="98" width="8" height="8" rx="2" fill="#3B82F6"/>
+              <rect x="126" y="98" width="8" height="8" rx="2" fill="#1A1F2B"/>
+              <rect x="56" y="112" width="8" height="8" rx="2" fill="#1A1F2B"/>
+              <rect x="70" y="116" width="8" height="8" rx="2" fill="#22D3EE"/>
+              <rect x="84" y="112" width="8" height="8" rx="2" fill="#1A1F2B"/>
+              <rect x="98" y="112" width="8" height="8" rx="2" fill="#3B82F6"/>
+              <rect x="112" y="112" width="8" height="8" rx="2" fill="#1A1F2B"/>
+              <rect x="126" y="112" width="8" height="8" rx="2" fill="#1A1F2B"/>
+              <rect x="56" y="126" width="8" height="8" rx="2" fill="#3B82F6"/>
+              <rect x="70" y="126" width="8" height="8" rx="2" fill="#1A1F2B"/>
+              <rect x="84" y="126" width="8" height="8" rx="2" fill="#22D3EE"/>
+              <rect x="98" y="126" width="8" height="8" rx="2" fill="#1A1F2B"/>
+              <rect x="112" y="126" width="8" height="8" rx="2" fill="#1A1F2B"/>
+            </svg>
+          </div>
+        </div>
+
+        <h2 class="qr-title">Log in with QR Code</h2>
+        <p class="qr-copy">Scan this with your verified mobile app for instant biometric login without typing passwords.</p>
+
+        <a href="#" class="passkey-btn" id="passkeyBtn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2a5 5 0 0 0-5 5v3H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1V7a5 5 0 0 0-5-5z"/>
+            <circle cx="12" cy="16" r="1.5"/>
+            <path d="M9 7a3 3 0 0 1 6 0v3H9V7z"/>
+          </svg>
+          <span>or sign in with passkey</span>
+        </a>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Fluid Toast Bubble -->
+  <div class="water-toast" id="waterToast" role="alert">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#22D3EE;">
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+      <polyline points="22 4 12 14.01 9 11.01"/>
+    </svg>
+    <span id="toastMsg">Action completed</span>
+  </div>
+
+  <script>
+    /* ==========================================================================
+       WATER-MORPHIC SCRIPT ENGINE
+       ========================================================================== */
+    document.addEventListener("DOMContentLoaded", () => {
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      // DOM Elements
+      const card = document.getElementById("waterCard");
+      const form = document.getElementById("liquidLoginForm");
+      const emailInput = document.getElementById("inputEmail");
+      const pwdInput = document.getElementById("inputPassword");
+      const wrapEmail = document.getElementById("wrapEmail");
+      const wrapPassword = document.getElementById("wrapPassword");
+      const loginBtn = document.getElementById("loginBtn");
+      const pwdToggleBtn = document.getElementById("pwdToggleBtn");
+      const eyeOpen = pwdToggleBtn.querySelector(".eye-open");
+      const eyeClosed = pwdToggleBtn.querySelector(".eye-closed");
+      const qrTile = document.getElementById("qrTile");
+      const passkeyBtn = document.getElementById("passkeyBtn");
+      const toast = document.getElementById("waterToast");
+      const toastMsg = document.getElementById("toastMsg");
+
+      // SVG Filter nodes for liquid distortion
+      const liquidTurbulence = document.getElementById("liquidTurbulence");
+      const liquidDisplacement = document.getElementById("liquidDisplacement");
+      const supportsSvgFilter = !!(liquidTurbulence && liquidDisplacement && !prefersReducedMotion);
+
+      // Pre-fill Samar's credentials if desired, or leave clean
+      emailInput.value = "samarrajxyz@gmail.com";
+      wrapEmail.classList.add("has-value");
+
+      /* ------------------------------------------------------------------------
+         1. Input Focus Ripple & Organic Breathing Motion
+         ------------------------------------------------------------------------ */
+      function setupInputInteractions(wrap, input) {
+        // Track mouse entry coordinates for radial ripple origin
+        wrap.addEventListener("mousemove", (e) => {
+          const rect = wrap.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          wrap.style.setProperty("--ripple-x", `${x}px`);
+          wrap.style.setProperty("--ripple-y", `${y}px`);
+        });
+
+        input.addEventListener("focus", (e) => {
+          wrap.classList.add("focused");
+          // Re-trigger ripple animation
+          const ripple = wrap.querySelector(".input-ripple-wave");
+          if (ripple) {
+            ripple.style.animation = "none";
+            void ripple.offsetWidth; // trigger reflow
+            ripple.style.animation = "";
+          }
+        });
+
+        input.addEventListener("blur", () => {
+          wrap.classList.remove("focused");
+          if (input.value.trim().length > 0) {
+            wrap.classList.add("has-value");
+          } else {
+            wrap.classList.remove("has-value");
+          }
+        });
+
+        input.addEventListener("input", () => {
+          if (input.value.trim().length > 0) {
+            wrap.classList.add("has-value");
+          } else {
+            wrap.classList.remove("has-value");
+          }
+        });
+      }
+
+      setupInputInteractions(wrapEmail, emailInput);
+      setupInputInteractions(wrapPassword, pwdInput);
+
+      /* ------------------------------------------------------------------------
+         2. Password Visibility Toggle with Spring Transition
+         ------------------------------------------------------------------------ */
+      pwdToggleBtn.addEventListener("click", () => {
+        const isCurrentlyPassword = pwdInput.type === "password";
+        pwdInput.type = isCurrentlyPassword ? "text" : "password";
+
+        if (isCurrentlyPassword) {
+          eyeOpen.style.display = "none";
+          eyeClosed.style.display = "block";
+          pwdToggleBtn.title = "Hide password";
+        } else {
+          eyeOpen.style.display = "block";
+          eyeClosed.style.display = "none";
+          pwdToggleBtn.title = "Show password";
+        }
+
+        pwdInput.focus();
+      });
+
+      /* ------------------------------------------------------------------------
+         3. Button Click Water Wobble (Baseline CSS + SVG Turbulence Filter)
+         ------------------------------------------------------------------------ */
+      let isDistorting = false;
+
+      function triggerSvgLiquidDisplacement() {
+        if (!supportsSvgFilter || isDistorting) return;
+        isDistorting = true;
+
+        loginBtn.style.filter = "url(#waterWobbleFilter)";
+        const startTime = performance.now();
+        const duration = 550; // ms
+
+        function animateFrame(now) {
+          const elapsed = now - startTime;
+          const progress = Math.min(1, elapsed / duration);
+
+          // Liquid sine wave curve (rises and settles)
+          const amplitude = Math.sin(progress * Math.PI);
+          const frequency = 0.04 + amplitude * 0.08;
+          const scale = amplitude * 18; // maximum displacement scale
+
+          liquidTurbulence.setAttribute("baseFrequency", `${frequency} ${frequency}`);
+          liquidDisplacement.setAttribute("scale", scale.toFixed(2));
+
+          if (progress < 1) {
+            requestAnimationFrame(animateFrame);
+          } else {
+            liquidTurbulence.setAttribute("baseFrequency", "0");
+            liquidDisplacement.setAttribute("scale", "0");
+            loginBtn.style.filter = "none";
+            isDistorting = false;
+          }
+        }
+
+        requestAnimationFrame(animateFrame);
+      }
+
+      // Track click coordinates for radial highlight ripple
+      loginBtn.addEventListener("mousedown", (e) => {
+        const rect = loginBtn.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        loginBtn.style.setProperty("--btn-ripple-x", `${x}px`);
+        loginBtn.style.setProperty("--btn-ripple-y", `${y}px`);
+
+        loginBtn.classList.add("deforming");
+      });
+
+      loginBtn.addEventListener("mouseup", () => {
+        loginBtn.classList.remove("deforming");
+        loginBtn.classList.add("ripple-active");
+
+        triggerSvgLiquidDisplacement();
+
+        setTimeout(() => {
+          loginBtn.classList.remove("ripple-active");
+        }, 650);
+      });
+
+      loginBtn.addEventListener("mouseleave", () => {
+        loginBtn.classList.remove("deforming");
+      });
+
+      /* ------------------------------------------------------------------------
+         4. Form Submission & Simulated Authentication
+         ------------------------------------------------------------------------ */
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+
+        const email = emailInput.value.trim();
+        const password = pwdInput.value.trim();
+
+        if (!email) {
+          emailInput.focus();
+          showToast("Please enter your email or phone");
+          return;
+        }
+
+        if (!password) {
+          pwdInput.focus();
+          showToast("Please enter your access password");
+          return;
+        }
+
+        // Wobble button and show feedback
+        loginBtn.classList.add("deforming");
+        setTimeout(() => loginBtn.classList.remove("deforming"), 200);
+
+        showToast("Authenticated! Connecting to Placement OS...");
+
+        setTimeout(() => {
+          window.location.href = "index.html";
+        }, 1200);
+      });
+
+      /* ------------------------------------------------------------------------
+         5. QR Code Interactive Click / Simulation
+         ------------------------------------------------------------------------ */
+      qrTile.addEventListener("click", () => {
+        qrTile.style.transform = "scale(0.92) rotate(-2deg)";
+        setTimeout(() => {
+          qrTile.style.transform = "";
+          showToast("QR code refreshed! Scan with your phone");
+        }, 220);
+      });
+
+      passkeyBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        showToast("Passkey prompt initialized (Touch ID / Face ID)");
+      });
+
+      /* ------------------------------------------------------------------------
+         6. Mouse Parallax for Floating Orbs & Card Reflection
+         ------------------------------------------------------------------------ */
+      if (!prefersReducedMotion) {
+        const orb1 = document.getElementById("orb1");
+        const orb2 = document.getElementById("orb2");
+        const orb3 = document.getElementById("orb3");
+
+        let mouseX = 0;
+        let mouseY = 0;
+        let currentX = 0;
+        let currentY = 0;
+
+        window.addEventListener("mousemove", (e) => {
+          mouseX = (e.clientX / window.innerWidth) - 0.5;
+          mouseY = (e.clientY / window.innerHeight) - 0.5;
+
+          // Update card reflection coordinates
+          const cardRect = card.getBoundingClientRect();
+          const cardRelX = ((e.clientX - cardRect.left) / cardRect.width) * 100;
+          const cardRelY = ((e.clientY - cardRect.top) / cardRect.height) * 100;
+          card.style.setProperty("--mouse-card-x", `${cardRelX}%`);
+          card.style.setProperty("--mouse-card-y", `${cardRelY}%`);
+        });
+
+        function renderParallax() {
+          currentX += (mouseX - currentX) * 0.06;
+          currentY += (mouseY - currentY) * 0.06;
+
+          if (orb1) orb1.style.transform = `translate(${currentX * 45}px, ${currentY * 45}px)`;
+          if (orb2) orb2.style.transform = `translate(${currentX * -60}px, ${currentY * -60}px)`;
+          if (orb3) orb3.style.transform = `translate(${currentX * 30}px, ${currentY * -40}px)`;
+
+          requestAnimationFrame(renderParallax);
+        }
+
+        renderParallax();
+      }
+
+      /* ------------------------------------------------------------------------
+         7. Fluid Toast Bubble Function
+         ------------------------------------------------------------------------ */
+      let toastTimeout = null;
+      function showToast(message) {
+        toastMsg.textContent = message;
+        toast.classList.add("show");
+        if (toastTimeout) clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(() => {
+          toast.classList.remove("show");
+        }, 3200);
+      }
+    });
+  </script>
+</body>
+</html>
