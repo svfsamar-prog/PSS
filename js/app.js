@@ -117,10 +117,10 @@ class PlacementOSApp {
       ]);
 
       this.profile = profileData || {
-        dsa_solved: 42,
-        sql_solved: 68,
+        dsa_solved: 0,
+        sql_solved: 0,
         internships_done: 0,
-        certifications_done: 2
+        certifications_done: 0
       };
 
       // Map tasks
@@ -647,6 +647,29 @@ class PlacementOSApp {
     return `<span class="dot-progress-indicator" title="${pct}%"><span class="dots-filled">${'●'.repeat(filled)}</span><span class="dots-empty">${'○'.repeat(empty)}</span></span>`;
   }
 
+  getCategoryProgress(categoryName) {
+    let tot = 0;
+    let done = 0;
+    const targets = Array.isArray(categoryName)
+      ? categoryName.map(c => c.toLowerCase())
+      : [categoryName.toLowerCase()];
+
+    this.curriculum.forEach((sem, si) => {
+      sem.sections.forEach((sec, ci) => {
+        const cat = (sec.category || "").toLowerCase();
+        const lbl = (sec.section_label || sec.label || sec.title || "").toLowerCase();
+        const matches = targets.some(t => cat.includes(t) || lbl.includes(t));
+        if (matches) {
+          sec.items.forEach((_, ii) => {
+            tot++;
+            if (this.isTaskDone(`s${si}-${ci}-${ii}`)) done++;
+          });
+        }
+      });
+    });
+    return tot ? Math.round((done / tot) * 100) : 0;
+  }
+
   /* ==========================================================================
      VIEW 1: DASHBOARD (EDTECH LANDING HERO + FLOATING KPIS + BENTO GRID)
      ========================================================================== */
@@ -663,10 +686,10 @@ class PlacementOSApp {
     const todayPlan = TODAY_FOCUS_TEMPLATES[dayIdx] || TODAY_FOCUS_TEMPLATES[1];
     const p1Stat = stats.projectStats[0];
 
-    const dsaSolved = this.profile?.dsa_solved ?? 42;
-    const sqlSolved = this.profile?.sql_solved ?? 68;
+    const dsaSolved = this.profile?.dsa_solved ?? 0;
+    const sqlSolved = this.profile?.sql_solved ?? 0;
     const internDone = this.profile?.internships_done ?? 0;
-    const certDone = this.profile?.certifications_done ?? 2;
+    const certDone = this.profile?.certifications_done ?? 0;
     const careerReadinessIndex = Math.min(100, Math.round(
       (stats.overallPct * 0.35) +
       (Math.min(100, (dsaSolved / 150) * 100) * 0.35) +
@@ -861,7 +884,7 @@ class PlacementOSApp {
             </div>
             <div class="bento-big-badge">
               <span class="badge-num">${careerReadinessIndex}%</span>
-              <span class="badge-lbl">Pacing Ahead</span>
+              <span class="badge-lbl">${careerReadinessIndex > 0 ? 'Pacing Ahead' : 'Starting Track'}</span>
             </div>
           </div>
 
@@ -1197,13 +1220,13 @@ class PlacementOSApp {
 
   renderSkillsSnapshotHtml() {
     const list = [
-      { name: "Python", pct: 72, icon: "🐍" },
-      { name: "SQL", pct: 45, icon: "🗄️" },
-      { name: "DSA", pct: 28, icon: "⚡" },
-      { name: "ML", pct: 8, icon: "🤖" },
-      { name: "GenAI", pct: 0, icon: "✨" },
-      { name: "Git & GitHub", pct: 65, icon: "🐙" },
-      { name: "System Design", pct: 0, icon: "🏗️" }
+      { name: "Python", pct: this.getCategoryProgress("Python"), icon: "🐍" },
+      { name: "SQL", pct: this.getCategoryProgress("SQL"), icon: "🗄️" },
+      { name: "DSA", pct: this.getCategoryProgress("DSA"), icon: "⚡" },
+      { name: "ML", pct: this.getCategoryProgress("Machine Learning"), icon: "🤖" },
+      { name: "GenAI", pct: this.getCategoryProgress("GenAI"), icon: "✨" },
+      { name: "Git & GitHub", pct: this.getCategoryProgress(["Tools", "Git"]), icon: "🐙" },
+      { name: "System Design", pct: this.getCategoryProgress("System Design"), icon: "🏗️" }
     ];
 
     return list.map(item => `
@@ -1265,7 +1288,7 @@ class PlacementOSApp {
     // Quick counters with Supabase write
     document.getElementById("quickDsaPlusBtn")?.addEventListener("click", async (e) => {
       e.stopPropagation();
-      this.profile.dsa_solved = (this.profile.dsa_solved || 42) + 1;
+      this.profile.dsa_solved = (this.profile.dsa_solved || 0) + 1;
       this.render();
       await db.updateProfile(this.profile.id, { dsa_solved: this.profile.dsa_solved });
       this.showToast("Saved to Supabase: DSA = " + this.profile.dsa_solved);
@@ -1273,7 +1296,7 @@ class PlacementOSApp {
 
     document.getElementById("quickSqlPlusBtn")?.addEventListener("click", async (e) => {
       e.stopPropagation();
-      this.profile.sql_solved = (this.profile.sql_solved || 68) + 1;
+      this.profile.sql_solved = (this.profile.sql_solved || 0) + 1;
       this.render();
       await db.updateProfile(this.profile.id, { sql_solved: this.profile.sql_solved });
       this.showToast("Saved to Supabase: SQL = " + this.profile.sql_solved);
@@ -1353,8 +1376,8 @@ class PlacementOSApp {
     const stats = this.calculateStats();
     const semStat = stats.semStats[this.activeSemIndex];
 
-    const dsaSolved = this.profile?.dsa_solved ?? 42;
-    const sqlSolved = this.profile?.sql_solved ?? 68;
+    const dsaSolved = this.profile?.dsa_solved ?? 0;
+    const sqlSolved = this.profile?.sql_solved ?? 0;
 
     const html = `
       <div class="roadmap-container">
@@ -1676,14 +1699,14 @@ class PlacementOSApp {
             <tbody>
               ${this.skillsMatrix.map(skill => {
                 let pct = 0;
-                if (skill.id === "python") pct = 72;
-                else if (skill.id === "sql") pct = 45;
-                else if (skill.id === "dsa") pct = 28;
-                else if (skill.id === "ml") pct = 8;
-                else if (skill.id === "genai") pct = 0;
-                else if (skill.id === "git") pct = 65;
-                else if (skill.id === "system-design") pct = 0;
-                else if (skill.id === "core-cs") pct = 0;
+                if (skill.id === "python") pct = this.getCategoryProgress("Python");
+                else if (skill.id === "sql") pct = this.getCategoryProgress("SQL");
+                else if (skill.id === "dsa") pct = this.getCategoryProgress("DSA");
+                else if (skill.id === "ml") pct = this.getCategoryProgress("Machine Learning");
+                else if (skill.id === "genai") pct = this.getCategoryProgress("GenAI");
+                else if (skill.id === "git") pct = this.getCategoryProgress(["Tools", "Git"]);
+                else if (skill.id === "system-design") pct = this.getCategoryProgress("System Design");
+                else if (skill.id === "core-cs") pct = this.getCategoryProgress("Core CS");
 
                 let statusBadge = "In Progress";
                 let statusClass = "Applied";
@@ -1848,8 +1871,8 @@ class PlacementOSApp {
      VIEW 5: PRACTICE (DSA & SQL TRACKER)
      ========================================================================== */
   renderPracticeView() {
-    const dsaSolved = this.profile?.dsa_solved ?? 42;
-    const sqlSolved = this.profile?.sql_solved ?? 68;
+    const dsaSolved = this.profile?.dsa_solved ?? 0;
+    const sqlSolved = this.profile?.sql_solved ?? 0;
 
     const dsaPct = Math.min(100, Math.round((dsaSolved / 150) * 100));
     const sqlPct = Math.min(100, Math.round((sqlSolved / 150) * 100));
@@ -1966,13 +1989,13 @@ class PlacementOSApp {
     this.dom.mainContainer.innerHTML = html;
 
     document.getElementById("dsaPlus1Btn")?.addEventListener("click", async () => {
-      this.profile.dsa_solved = (this.profile.dsa_solved || 42) + 1;
+      this.profile.dsa_solved = (this.profile.dsa_solved || 0) + 1;
       this.renderPracticeView();
       await db.updateProfile(this.profile.id, { dsa_solved: this.profile.dsa_solved });
     });
 
     document.getElementById("dsaPlus5Btn")?.addEventListener("click", async () => {
-      this.profile.dsa_solved = (this.profile.dsa_solved || 42) + 5;
+      this.profile.dsa_solved = (this.profile.dsa_solved || 0) + 5;
       this.renderPracticeView();
       await db.updateProfile(this.profile.id, { dsa_solved: this.profile.dsa_solved });
     });
@@ -1986,13 +2009,13 @@ class PlacementOSApp {
     });
 
     document.getElementById("sqlPlus1Btn")?.addEventListener("click", async () => {
-      this.profile.sql_solved = (this.profile.sql_solved || 68) + 1;
+      this.profile.sql_solved = (this.profile.sql_solved || 0) + 1;
       this.renderPracticeView();
       await db.updateProfile(this.profile.id, { sql_solved: this.profile.sql_solved });
     });
 
     document.getElementById("sqlPlus5Btn")?.addEventListener("click", async () => {
-      this.profile.sql_solved = (this.profile.sql_solved || 68) + 5;
+      this.profile.sql_solved = (this.profile.sql_solved || 0) + 5;
       this.renderPracticeView();
       await db.updateProfile(this.profile.id, { sql_solved: this.profile.sql_solved });
     });
@@ -2151,14 +2174,25 @@ class PlacementOSApp {
      ========================================================================== */
   renderAnalyticsView() {
     const stats = this.calculateStats();
+    const dsaSolved = this.profile?.dsa_solved ?? 0;
+    const sqlSolved = this.profile?.sql_solved ?? 0;
+    const careerReadinessIndex = Math.min(100, Math.round(
+      (stats.overallPct * 0.35) +
+      (Math.min(100, (dsaSolved / 150) * 100) * 0.35) +
+      ((stats.completedProjectsCount / 3) * 100 * 0.30)
+    ));
+
     const categories = [
-      { name: "Python", pct: 72 },
-      { name: "SQL", pct: 45 },
-      { name: "DSA", pct: 28 },
-      { name: "Backend", pct: 33 },
+      { name: "Python", pct: this.getCategoryProgress("Python") },
+      { name: "SQL", pct: this.getCategoryProgress("SQL") },
+      { name: "DSA", pct: this.getCategoryProgress("DSA") },
+      { name: "Backend", pct: this.getCategoryProgress("Backend") },
       { name: "Projects", pct: Math.round((stats.completedProjectsCount / 3) * 100) },
-      { name: "Career", pct: 25 }
+      { name: "Career", pct: this.getCategoryProgress("Career") }
     ];
+
+    const donutRatio = careerReadinessIndex / 100;
+    const donutOffset = (301.59 - (301.59 * donutRatio)).toFixed(2);
 
     const html = `
       <div>
@@ -2183,7 +2217,7 @@ class PlacementOSApp {
 
             <div class="weekly-chart-box">
               ${STUDY_HOURS_TARGET.map(d => {
-                const logged = this.studyHours[d.day] || d.target;
+                const logged = this.studyHours[d.day] || 0;
                 const heightPct = Math.round((logged / 5.0) * 100);
                 return `
                   <div class="bar-col">
@@ -2229,25 +2263,25 @@ class PlacementOSApp {
             <div class="donut-chart-container">
               <svg viewBox="0 0 120 120" class="donut-chart-svg">
                 <circle class="donut-ring-bg" cx="60" cy="60" r="48" stroke="var(--mint)" stroke-width="10" fill="none" />
-                <circle class="donut-ring-fill" cx="60" cy="60" r="48" stroke="var(--dark)" stroke-width="10" stroke-dasharray="301.59" stroke-dashoffset="${(301.59 - (301.59 * 0.38)).toFixed(2)}" stroke-linecap="round" fill="none" transform="rotate(-90 60 60)" />
-                <text x="60" y="58" class="donut-text-val" text-anchor="middle">38</text>
+                <circle class="donut-ring-fill" cx="60" cy="60" r="48" stroke="var(--dark)" stroke-width="10" stroke-dasharray="301.59" stroke-dashoffset="${donutOffset}" stroke-linecap="round" fill="none" transform="rotate(-90 60 60)" />
+                <text x="60" y="58" class="donut-text-val" text-anchor="middle">${careerReadinessIndex}</text>
                 <text x="60" y="74" class="donut-text-lbl" text-anchor="middle">/ 100</text>
               </svg>
             </div>
             <div class="donut-card-info">
               <div class="section-title-wrap" style="margin-bottom:0.5rem;">
                 <div class="section-title">
-                  <span>🎯</span> Placement Readiness Index: 38 / 100
+                  <span>🎯</span> Placement Readiness Index: ${careerReadinessIndex} / 100
                 </div>
-                <span class="status-pill-crm Interview">Semester 3 Benchmark: 35+</span>
+                <span class="status-pill-crm ${careerReadinessIndex >= 35 ? 'Interview' : 'Saved'}">Semester 3 Benchmark: 35+</span>
               </div>
               <p style="font-size:0.86rem; color:var(--ink-secondary); line-height:1.5;">
-                Calculated across verified skill topics in Supabase, DSA problem counts (42/150), SQL targets (68/150), and Project #1 deliverables. You are tracking ahead of schedule for Semester 3.
+                Calculated across verified skill topics in Supabase, DSA problem counts (${dsaSolved}/150), SQL targets (${sqlSolved}/150), and Project #1 deliverables.
               </p>
               <div class="donut-metric-tags">
-                <span class="donut-tag">● Python Core: 72%</span>
-                <span class="donut-tag">● Algorithmic DSA: 28%</span>
-                <span class="donut-tag">● Major Project MVP: 33%</span>
+                <span class="donut-tag">● Python Core: ${this.getCategoryProgress("Python")}%</span>
+                <span class="donut-tag">● Algorithmic DSA: ${Math.min(100, Math.round((dsaSolved / 150) * 100))}%</span>
+                <span class="donut-tag">● Major Project MVP: ${stats.projectStats[0]?.pct || 0}%</span>
               </div>
             </div>
           </div>
