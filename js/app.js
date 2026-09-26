@@ -641,8 +641,14 @@ class PlacementOSApp {
     }
   }
 
+  renderDotProgress(pct, maxDots = 10) {
+    const filled = Math.min(maxDots, Math.max(0, Math.round((pct / 100) * maxDots)));
+    const empty = maxDots - filled;
+    return `<span class="dot-progress-indicator" title="${pct}%"><span class="dots-filled">${'●'.repeat(filled)}</span><span class="dots-empty">${'○'.repeat(empty)}</span></span>`;
+  }
+
   /* ==========================================================================
-     VIEW 1: DASHBOARD
+     VIEW 1: DASHBOARD (EDTECH LANDING HERO + FLOATING KPIS + BENTO GRID)
      ========================================================================== */
   renderDashboardView() {
     const stats = this.calculateStats();
@@ -661,171 +667,390 @@ class PlacementOSApp {
     const sqlSolved = this.profile?.sql_solved ?? 68;
     const internDone = this.profile?.internships_done ?? 0;
     const certDone = this.profile?.certifications_done ?? 2;
+    const careerReadinessIndex = Math.min(100, Math.round(
+      (stats.overallPct * 0.35) +
+      (Math.min(100, (dsaSolved / 150) * 100) * 0.35) +
+      ((stats.completedProjectsCount / 3) * 100 * 0.30)
+    ));
 
     const html = `
-      <!-- Welcome Hero -->
-      <section class="welcome-hero">
-        <div>
-          <h2 class="welcome-title">${timeGreeting}, Samar</h2>
-          <div class="welcome-sub">
-            <span>Your placement journey</span> · 
-            <b>Semester 3 (Sept 2026 – Jan 2027)</b>
-            <span class="status-pill">Active Season</span>
+      <div class="dashboard-view-wrapper">
+        <!-- Full Landing Hero Section -->
+        <section class="dashboard-landing-hero">
+        <div class="hero-left-content">
+          <div class="hero-season-pill">
+            <span class="hero-dot-lime"></span>
+            <span>Semester 3 · Active Placement Season</span>
+          </div>
+          <h1 class="hero-headline">
+            Build your placement<br>
+            <span class="hero-headline-accent">journey.</span>
+          </h1>
+          <p class="hero-subtext">
+            Personalized academic roadmap, algorithmic practice, and production systems tracker for <b>Samar Raj</b> · BCA (Data Science & AI-ML).
+          </p>
+          <div class="hero-actions">
+            <button class="btn-hero-primary" id="dashViewRoadmapBtn">
+              Explore Curriculum Roadmap <span>→</span>
+            </button>
+            <button class="btn-hero-secondary" id="dashQuickLogBtn">
+              ⚡ Log Practice
+            </button>
           </div>
         </div>
-        <div style="display:flex; gap:0.5rem;">
-          <button class="btn-outline" id="dashViewRoadmapBtn">Explore Roadmap →</button>
-          <button class="btn-primary" id="dashQuickLogBtn">⚡ Log Practice</button>
+
+        <!-- Right: Pure Geometric Isometric SVG Illustration -->
+        <div class="hero-right-illustration" aria-hidden="true">
+          <svg class="hero-illustration-svg" viewBox="0 0 520 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="heroGradLime" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#E7F45B"/>
+                <stop offset="100%" stop-color="#D4E444"/>
+              </linearGradient>
+              <linearGradient id="heroGradMint" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#DCEEE5"/>
+                <stop offset="100%" stop-color="#C5DFD3"/>
+              </linearGradient>
+              <linearGradient id="heroGradDark" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#18221D"/>
+                <stop offset="100%" stop-color="#111513"/>
+              </linearGradient>
+              <linearGradient id="heroGradPrimary" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#BFD9A8"/>
+                <stop offset="100%" stop-color="#A5C78A"/>
+              </linearGradient>
+              <filter id="heroGlowLime" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="6" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+            </defs>
+
+            <!-- Isometric Ground Grid -->
+            <path d="M110 270 L260 345 L470 240 L320 165 Z" fill="#F4F8F5" stroke="#E1E8E3" stroke-width="1.5" stroke-dasharray="4 4" />
+
+            <!-- Ascending Geometric Towers (Sem 3 -> Sem 6) -->
+            <!-- Tower 1: S3 (Foundations) -->
+            <g class="iso-tower s3-tower">
+              <path d="M165 220 L205 240 L205 285 L165 265 Z" fill="#BFD9A8" stroke="#A6C58D" stroke-width="1" />
+              <path d="M205 240 L245 220 L245 265 L205 285 Z" fill="#18221D" stroke="#111513" stroke-width="1" />
+              <path d="M165 220 L205 200 L245 220 L205 240 Z" fill="url(#heroGradLime)" stroke="#111513" stroke-width="1.5" />
+              <text x="205" y="225" font-size="11" font-weight="800" fill="#111513" text-anchor="middle" font-family="monospace">S3</text>
+            </g>
+
+            <!-- Tower 2: S4 (Machine Learning) -->
+            <g class="iso-tower s4-tower">
+              <path d="M230 175 L270 195 L270 260 L230 240 Z" fill="#A8C98E" stroke="#94B779" stroke-width="1" />
+              <path d="M270 195 L310 175 L310 240 L270 260 Z" fill="#1F2A23" stroke="#18221D" stroke-width="1" />
+              <path d="M230 175 L270 155 L310 175 L270 195 Z" fill="url(#heroGradMint)" stroke="#111513" stroke-width="1.5" />
+              <text x="270" y="180" font-size="11" font-weight="700" fill="#181C19" text-anchor="middle" font-family="monospace">S4</text>
+            </g>
+
+            <!-- Tower 3: S5 (GenAI & Architecture) -->
+            <g class="iso-tower s5-tower">
+              <path d="M295 130 L335 150 L335 235 L295 215 Z" fill="#BFD9A8" stroke="#A8C98E" stroke-width="1" />
+              <path d="M335 150 L375 130 L375 215 L335 235 Z" fill="#161E1A" stroke="#111513" stroke-width="1" />
+              <path d="M295 130 L335 110 L375 130 L335 150 Z" fill="#DCEEE5" stroke="#111513" stroke-width="1.5" />
+              <text x="335" y="135" font-size="11" font-weight="700" fill="#181C19" text-anchor="middle" font-family="monospace">S5</text>
+            </g>
+
+            <!-- Tower 4: S6 (Placement Blitz / Offers) -->
+            <g class="iso-tower s6-tower">
+              <path d="M360 85 L400 105 L400 210 L360 190 Z" fill="#A8C98E" stroke="#94B779" stroke-width="1" />
+              <path d="M400 105 L440 85 L440 190 L400 210 Z" fill="#111513" stroke="#000" stroke-width="1" />
+              <path d="M360 85 L400 65 L440 85 L400 105 Z" fill="url(#heroGradLime)" stroke="#111513" stroke-width="2" />
+              <text x="400" y="90" font-size="10" font-weight="800" fill="#111513" text-anchor="middle" font-family="monospace">OFFER</text>
+            </g>
+
+            <!-- Ascending Pathway Line -->
+            <path d="M205 200 Q270 130 400 65" fill="none" stroke="#111513" stroke-width="3" stroke-dasharray="6 4" />
+            <circle cx="205" cy="200" r="5" fill="#E7F45B" stroke="#111513" stroke-width="2" />
+            <circle cx="270" cy="155" r="4" fill="#DCEEE5" stroke="#111513" stroke-width="1.5" />
+            <circle cx="335" cy="110" r="4" fill="#BFD9A8" stroke="#111513" stroke-width="1.5" />
+            <circle cx="400" cy="65" r="7" fill="#E7F45B" stroke="#111513" stroke-width="2" filter="url(#heroGlowLime)" />
+
+            <!-- Isometric Laptop Terminal -->
+            <g class="iso-laptop">
+              <path d="M65 190 L155 235 L195 215 L105 170 Z" fill="#18221D" stroke="#111513" stroke-width="1.5" />
+              <path d="M115 212 L140 224 L150 219 L125 207 Z" fill="#2A3830" />
+              <path d="M105 170 L105 95 L195 140 L195 215 Z" fill="#111513" stroke="#111513" stroke-width="1.5" />
+              <path d="M110 164 L110 103 L190 143 L190 204 Z" fill="#1F2A24" stroke="#2E3F35" stroke-width="1" />
+              <line x1="120" y1="125" x2="160" y2="145" stroke="#E7F45B" stroke-width="2.5" stroke-linecap="round" />
+              <line x1="120" y1="137" x2="175" y2="165" stroke="#DCEEE5" stroke-width="2" stroke-linecap="round" />
+              <line x1="120" y1="149" x2="150" y2="164" stroke="#BFD9A8" stroke-width="2" stroke-linecap="round" />
+              <line x1="120" y1="161" x2="170" y2="186" stroke="#78827C" stroke-width="1.5" stroke-linecap="round" />
+            </g>
+
+            <!-- Floating Verified Candidate Pill -->
+            <g class="iso-badge" transform="translate(55, 38)">
+              <rect x="0" y="0" width="134" height="46" rx="12" fill="#FFFFFF" stroke="#E1E8E3" stroke-width="1.5" />
+              <circle cx="23" cy="23" r="11" fill="#E7F45B" stroke="#111513" stroke-width="1" />
+              <path d="M18 23 L21 26 L28 19" stroke="#111513" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+              <text x="42" y="20" font-size="10" font-weight="700" fill="#181C19">Samar Raj</text>
+              <text x="42" y="33" font-size="8" font-weight="600" fill="#78827C">BCA AI/ML · Sem 3</text>
+            </g>
+
+            <!-- Geometric Cubes Floating in Scene -->
+            <g transform="translate(425, 155)">
+              <path d="M0 10 L16 18 L32 10 L16 2 Z" fill="#E7F45B" stroke="#111513" stroke-width="1" />
+              <path d="M0 10 L16 18 L16 32 L0 24 Z" fill="#BFD9A8" />
+              <path d="M16 18 L32 10 L32 24 L16 32 Z" fill="#111513" />
+            </g>
+          </svg>
         </div>
       </section>
 
-      <!-- Current Focus Hero Card -->
-      <div class="focus-hero-card">
-        <div class="focus-hero-content">
-          <div class="focus-hero-tag">
-            <span>🎯</span> Current Academic & Career Focus
+      <!-- Floating Offset KPI Cards Overlapping Hero Edge -->
+      <div class="hero-floating-kpis">
+        <!-- Floating Card 1 (Tilted -1.5deg) -->
+        <div class="floating-kpi-card kpi-tilt-left" id="kpiOverallCard" style="cursor:pointer;" title="Click to view full curriculum roadmap">
+          <div class="kpi-header">
+            <span class="kpi-label">Overall Roadmap</span>
+            <span class="kpi-tag-mint">${stats.doneAll}/${stats.totalAll} Topics</span>
           </div>
-          <div class="focus-hero-headline">Python Core + SQL Advanced + DSA Patterns</div>
-          <div class="focus-progress-wrap">
-            <div class="focus-progress-bar">
-              <div class="focus-progress-fill" style="width: ${sem3Pct}%;"></div>
+          <div class="kpi-value-row">
+            <span class="kpi-num">${stats.overallPct}%</span>
+            <span class="kpi-arrow">→</span>
+          </div>
+          <div class="kpi-dots-wrap">
+            ${this.renderDotProgress(stats.overallPct, 10)}
+          </div>
+          <div class="kpi-footer-sub">Verified curriculum progress</div>
+        </div>
+
+        <!-- Floating Card 2 (Tilted +1.2deg) -->
+        <div class="floating-kpi-card kpi-tilt-right">
+          <div class="kpi-header">
+            <span class="kpi-label">DSA Solved</span>
+            <button class="kpi-micro-btn" id="quickDsaPlusBtn" title="Log +1 DSA problem solved">+1</button>
+          </div>
+          <div class="kpi-value-row">
+            <span class="kpi-num">${dsaSolved}</span>
+            <span class="kpi-denom">/ 150</span>
+          </div>
+          <div class="kpi-dots-wrap">
+            ${this.renderDotProgress(Math.round((dsaSolved / 150) * 100), 10)}
+          </div>
+          <div class="kpi-footer-sub">Target: 150 LeetCode & HackerRank</div>
+        </div>
+
+        <!-- Floating Card 3 (Tilted -0.8deg) -->
+        <div class="floating-kpi-card kpi-tilt-subtle">
+          <div class="kpi-header">
+            <span class="kpi-label">Career Readiness Index</span>
+            <span class="kpi-tag-lime">Tier 1 Target</span>
+          </div>
+          <div class="kpi-value-row">
+            <span class="kpi-num">${careerReadinessIndex}</span>
+            <span class="kpi-denom">/ 100</span>
+          </div>
+          <div class="kpi-dots-wrap">
+            ${this.renderDotProgress(careerReadinessIndex, 10)}
+          </div>
+          <div class="kpi-footer-sub">Calibrated for AI & Product Teams</div>
+        </div>
+      </div>
+
+      <!-- Large Bento Grid (2-3 Large Compartmentalized Bento Cards) -->
+      <div class="dashboard-bento-grid">
+        <!-- Bento Card 1: Large Career Readiness Profile -->
+        <div class="bento-card bento-readiness">
+          <div class="bento-header">
+            <div>
+              <span class="bento-tag">Placement Readiness Profile</span>
+              <h2 class="bento-title">Core Capability Stack</h2>
             </div>
-            <div class="focus-progress-label">${sem3Pct}% completed</div>
+            <div class="bento-big-badge">
+              <span class="badge-num">${careerReadinessIndex}%</span>
+              <span class="badge-lbl">Pacing Ahead</span>
+            </div>
+          </div>
+
+          <div class="readiness-stacked-breakdown">
+            <div class="breakdown-row">
+              <div class="breakdown-meta">
+                <span class="breakdown-title">Semester 3 Curriculum Foundations</span>
+                <span class="breakdown-score">${sem3Pct}%</span>
+              </div>
+              <div class="breakdown-track">
+                ${this.renderDotProgress(sem3Pct, 12)}
+              </div>
+            </div>
+
+            <div class="breakdown-row">
+              <div class="breakdown-meta">
+                <span class="breakdown-title">Algorithmic Problem Solving (DSA 150)</span>
+                <span class="breakdown-score">${Math.min(100, Math.round((dsaSolved / 150) * 100))}%</span>
+              </div>
+              <div class="breakdown-track">
+                ${this.renderDotProgress(Math.round((dsaSolved / 150) * 100), 12)}
+              </div>
+            </div>
+
+            <div class="breakdown-row">
+              <div class="breakdown-meta">
+                <span class="breakdown-title">Production Systems & Major Projects</span>
+                <span class="breakdown-score">${Math.round((stats.completedProjectsCount / 3) * 100)}%</span>
+              </div>
+              <div class="breakdown-track">
+                ${this.renderDotProgress(Math.round((stats.completedProjectsCount / 3) * 100), 12)}
+              </div>
+            </div>
+
+            <div class="breakdown-row">
+              <div class="breakdown-meta">
+                <span class="breakdown-title">Verified Certifications & Internships</span>
+                <span class="breakdown-score">${Math.round(((certDone + internDone) / 6) * 100)}%</span>
+              </div>
+              <div class="breakdown-track">
+                ${this.renderDotProgress(Math.round(((certDone + internDone) / 6) * 100), 12)}
+              </div>
+            </div>
+          </div>
+
+          <div class="bento-footer">
+            <button class="btn-bento-primary" id="dashContinueRoadmapBtn">
+              Continue Semester 3 Roadmap <span>→</span>
+            </button>
+            <span class="bento-sub-note">Direct sync with Supabase PostgreSQL (Project PSS)</span>
           </div>
         </div>
-        <button class="btn-primary" id="dashContinueRoadmapBtn">
-          Continue Roadmap →
-        </button>
+
+        <!-- Bento Card 2: Upcoming Assessments & Milestones List -->
+        <div class="bento-card bento-upcoming">
+          <div class="bento-header">
+            <div>
+              <span class="bento-tag">Milestone Timeline</span>
+              <h2 class="bento-title">Upcoming Pipeline</h2>
+            </div>
+            <span class="upcoming-count-pill">4 Scheduled</span>
+          </div>
+
+          <div class="upcoming-clean-list">
+            <div class="upcoming-item">
+              <div class="upcoming-date-box">
+                <span class="month">OCT</span>
+                <span class="day">15</span>
+              </div>
+              <div class="upcoming-details">
+                <div class="upcoming-item-title">DSA Trees & Graphs Diagnostic Mock</div>
+                <div class="upcoming-item-sub">60-minute technical assessment · LeetCode medium patterns</div>
+              </div>
+              <span class="upcoming-category-tag">Assessment</span>
+              <button class="upcoming-menu-btn" title="Options">···</button>
+            </div>
+
+            <div class="upcoming-item">
+              <div class="upcoming-date-box">
+                <span class="month">NOV</span>
+                <span class="day">04</span>
+              </div>
+              <div class="upcoming-details">
+                <div class="upcoming-item-title">Project #1 Analytics Platform Review</div>
+                <div class="upcoming-item-sub">Next.js + FastAPI + PostgreSQL pipeline verification</div>
+              </div>
+              <span class="upcoming-category-tag">Deliverable</span>
+              <button class="upcoming-menu-btn" title="Options">···</button>
+            </div>
+
+            <div class="upcoming-item">
+              <div class="upcoming-date-box">
+                <span class="month">DEC</span>
+                <span class="day">02</span>
+              </div>
+              <div class="upcoming-details">
+                <div class="upcoming-item-title">Summer 2027 Internship Applications</div>
+                <div class="upcoming-item-sub">Resume drop across Wellfound, Internshala, & alumni referrals</div>
+              </div>
+              <span class="upcoming-category-tag">Career CRM</span>
+              <button class="upcoming-menu-btn" title="Options">···</button>
+            </div>
+
+            <div class="upcoming-item">
+              <div class="upcoming-date-box">
+                <span class="month">JAN</span>
+                <span class="day">15</span>
+              </div>
+              <div class="upcoming-details">
+                <div class="upcoming-item-title">Semester 3 Comprehensive Tech Defense</div>
+                <div class="upcoming-item-sub">Academic evaluation · Python, SQL & Algorithms benchmark</div>
+              </div>
+              <span class="upcoming-category-tag">Academic</span>
+              <button class="upcoming-menu-btn" title="Options">···</button>
+            </div>
+          </div>
+
+          <div class="bento-footer">
+            <button class="btn-bento-subtle" id="dashViewTimelineBtn">
+              View Semester Pipeline <span>→</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Bento Card 3: ONE Dark/Black Card for Placement Insight -->
+        <div class="bento-card bento-dark-insight">
+          <div class="insight-header">
+            <div class="insight-badge">
+              <span class="insight-lime-dot"></span>
+              <span>AI-CALIBRATED PLACEMENT INSIGHT</span>
+            </div>
+            <span class="insight-tier-tag">BCA AI-ML Track</span>
+          </div>
+
+          <h3 class="insight-heading">Matched Target Roles & Skill Fit</h3>
+          <p class="insight-subtext">
+            Based on your active Sem 3 coursework (Python, SQL, DSA) and Project #1 analytics architecture:
+          </p>
+
+          <div class="insight-roles-list">
+            <div class="insight-role-item">
+              <div class="role-left">
+                <span class="role-icon">⚡</span>
+                <div>
+                  <div class="role-title">Python AI/ML Systems Intern</div>
+                  <div class="role-tech">FastAPI · Python Core · SQL CTEs · Docker</div>
+                </div>
+              </div>
+              <span class="role-match-pill">92% Match</span>
+            </div>
+
+            <div class="insight-role-item">
+              <div class="role-left">
+                <span class="role-icon">🗄️</span>
+                <div>
+                  <div class="role-title">Data Platform & Analytics Engineer</div>
+                  <div class="role-tech">PostgreSQL · Schema Modeling · Power BI</div>
+                </div>
+              </div>
+              <span class="role-match-pill">88% Match</span>
+            </div>
+
+            <div class="insight-role-item">
+              <div class="role-left">
+                <span class="role-icon">🤖</span>
+                <div>
+                  <div class="role-title">Applied ML & RAG Pipeline Associate</div>
+                  <div class="role-tech">LangChain · Vector Search (Sem 4-5 Target)</div>
+                </div>
+              </div>
+              <span class="role-match-pill planned">84% Projected</span>
+            </div>
+          </div>
+
+          <div class="insight-footer">
+            <button class="insight-explore-btn" id="dashExploreTargetsBtn">
+              <span>Explore Target Roles & Compensation</span>
+              <span class="arrow">→</span>
+            </button>
+          </div>
+        </div>
       </div>
 
-      <!-- 6-Card Placement Readiness KPI Grid (Backed by Supabase) -->
-      <div class="readiness-kpis">
-        <div class="readiness-kpi-card" id="kpiOverallCard" style="cursor:pointer;">
-          <div class="kpi-label">Overall Roadmap</div>
-          <div class="kpi-val">${stats.overallPct}%</div>
-          <div class="kpi-bar">
-            <div class="kpi-bar-fill" style="width: ${stats.overallPct}%;"></div>
-          </div>
-          <div class="kpi-meta">
-            <span>${stats.doneAll}/${stats.totalAll} topics</span>
-            <span style="color:var(--accent-blue);">Details →</span>
-          </div>
-        </div>
-
-        <div class="readiness-kpi-card">
-          <div class="kpi-label">DSA Solved</div>
-          <div class="kpi-val">${dsaSolved} <span style="font-size:0.95rem; color:var(--ink-muted);">/ 150</span></div>
-          <div class="kpi-bar">
-            <div class="kpi-bar-fill" style="width: ${Math.min(100, Math.round((dsaSolved / 150) * 100))}%;"></div>
-          </div>
-          <div class="kpi-meta">
-            <span>Target: 150 problems</span>
-            <button class="kpi-quick-btn" id="quickDsaPlusBtn">+1</button>
-          </div>
-        </div>
-
-        <div class="readiness-kpi-card">
-          <div class="kpi-label">SQL Solved</div>
-          <div class="kpi-val">${sqlSolved} <span style="font-size:0.95rem; color:var(--ink-muted);">/ 150</span></div>
-          <div class="kpi-bar">
-            <div class="kpi-bar-fill" style="width: ${Math.min(100, Math.round((sqlSolved / 150) * 100))}%;"></div>
-          </div>
-          <div class="kpi-meta">
-            <span>Target: 150 problems</span>
-            <button class="kpi-quick-btn" id="quickSqlPlusBtn">+1</button>
-          </div>
-        </div>
-
-        <div class="readiness-kpi-card" id="kpiProjectsCard" style="cursor:pointer;">
-          <div class="kpi-label">Major Projects</div>
-          <div class="kpi-val">${stats.completedProjectsCount} <span style="font-size:0.95rem; color:var(--ink-muted);">/ 3</span></div>
-          <div class="kpi-bar">
-            <div class="kpi-bar-fill" style="width: ${Math.round((stats.completedProjectsCount / 3) * 100)}%;"></div>
-          </div>
-          <div class="kpi-meta">
-            <span>P1: ${p1Stat.pct}% done</span>
-            <span style="color:var(--accent-blue);">Manage →</span>
-          </div>
-        </div>
-
-        <div class="readiness-kpi-card" id="kpiInternshipsCard" style="cursor:pointer;">
-          <div class="kpi-label">Internships</div>
-          <div class="kpi-val">${internDone} <span style="font-size:0.95rem; color:var(--ink-muted);">/ 2</span></div>
-          <div class="kpi-bar">
-            <div class="kpi-bar-fill" style="width: ${(internDone / 2) * 100}%;"></div>
-          </div>
-          <div class="kpi-meta">
-            <span>Target: 1-2 by Sem 5</span>
-            <button class="kpi-quick-btn" id="quickInternPlusBtn">+1</button>
-          </div>
-        </div>
-
-        <div class="readiness-kpi-card">
-          <div class="kpi-label">Certifications</div>
-          <div class="kpi-val">${certDone} <span style="font-size:0.95rem; color:var(--ink-muted);">/ 4</span></div>
-          <div class="kpi-bar">
-            <div class="kpi-bar-fill" style="width: ${(certDone / 4) * 100}%;"></div>
-          </div>
-          <div class="kpi-meta">
-            <span>Google Cloud + Kaggle</span>
-            <button class="kpi-quick-btn" id="quickCertPlusBtn">+1</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Semester Roadmap Visual Timeline Bar -->
-      <div class="roadmap-timeline-card">
-        <div class="section-title-wrap">
-          <div class="section-title">
-            <span>🗺️</span> Placement Journey Pipeline
-          </div>
-          <div class="section-subtitle">Click any semester milestone to view detailed roadmap</div>
-        </div>
-
-        <div class="timeline-track-wrap">
-          <div class="timeline-line-bg"></div>
-          <div class="timeline-nodes-grid">
-            <button class="timeline-node now" data-sem-jump="0">
-              <div class="timeline-node-pin">S3</div>
-              <div class="timeline-node-badge">NOW</div>
-              <div class="timeline-node-title">Foundations</div>
-              <div class="timeline-node-subtitle">Python · SQL · DSA · Project 1</div>
-              <div class="timeline-node-pct">${stats.semStats[0].pct}% complete</div>
-            </button>
-
-            <button class="timeline-node" data-sem-jump="1">
-              <div class="timeline-node-pin">S4</div>
-              <div class="timeline-node-badge" style="color:var(--ink-muted);">UPCOMING</div>
-              <div class="timeline-node-title">Machine Learning</div>
-              <div class="timeline-node-subtitle">Stats · Scikit-Learn · Internship #1</div>
-              <div class="timeline-node-pct">${stats.semStats[1].pct}% complete</div>
-            </button>
-
-            <button class="timeline-node" data-sem-jump="2">
-              <div class="timeline-node-pin">S5</div>
-              <div class="timeline-node-badge" style="color:var(--ink-muted);">PLANNED</div>
-              <div class="timeline-node-title">GenAI + System Design</div>
-              <div class="timeline-node-subtitle">RAG · LLMs · Architecture · Internship #2</div>
-              <div class="timeline-node-pct">${stats.semStats[2].pct}% complete</div>
-            </button>
-
-            <button class="timeline-node" data-sem-jump="3">
-              <div class="timeline-node-pin">S6</div>
-              <div class="timeline-node-badge" style="color:var(--ink-muted);">TARGET</div>
-              <div class="timeline-node-title">Placement Blitz</div>
-              <div class="timeline-node-subtitle">Core CS · Mock Interviews · Offers</div>
-              <div class="timeline-node-pct">${stats.semStats[3].pct}% complete</div>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- Two-column Dashboard Grid -->
+      <!-- Two-column Execution Grid -->
       <div class="dashboard-grid">
         <!-- Left Column -->
-        <div>
+        <div class="dashboard-col-left">
           <!-- Today's Focus Card -->
-          <div class="card" style="margin-bottom: 1.4rem;">
+          <div class="card dashboard-today-focus-card" style="margin-bottom: 1.4rem;">
             <div class="section-title-wrap">
               <div>
                 <div class="section-title">
@@ -846,7 +1071,7 @@ class PlacementOSApp {
           </div>
 
           <!-- Skills Snapshot Card -->
-          <div class="card">
+          <div class="card dashboard-skills-card">
             <div class="section-title-wrap">
               <div class="section-title">
                 <span>📊</span> Skill Matrix Snapshot
@@ -860,9 +1085,9 @@ class PlacementOSApp {
         </div>
 
         <!-- Right Column -->
-        <div>
+        <div class="dashboard-col-right">
           <!-- Current Active Project Card -->
-          <div class="card" style="margin-bottom: 1.4rem;">
+          <div class="card dashboard-project-card" style="margin-bottom: 1.4rem;">
             <div class="section-title-wrap">
               <div class="section-title">
                 <span>🚀</span> Current Project Focus
@@ -899,7 +1124,7 @@ class PlacementOSApp {
           </div>
 
           <!-- Weekly Study Rhythm Quick Glance -->
-          <div class="card">
+          <div class="card dashboard-rhythm-card">
             <div class="section-title-wrap">
               <div class="section-title">
                 <span>📅</span> Weekly Study Rhythm
@@ -925,7 +1150,8 @@ class PlacementOSApp {
           </div>
         </div>
       </div>
-    `;
+    </div>
+  `;
 
     this.dom.mainContainer.innerHTML = html;
     this.bindDashboardEvents();
@@ -1013,6 +1239,8 @@ class PlacementOSApp {
 
   bindDashboardEvents() {
     document.getElementById("dashViewRoadmapBtn")?.addEventListener("click", () => this.switchView("roadmap"));
+    document.getElementById("dashViewTimelineBtn")?.addEventListener("click", () => this.switchView("roadmap"));
+    document.getElementById("dashExploreTargetsBtn")?.addEventListener("click", () => this.switchView("targets"));
     document.getElementById("dashContinueRoadmapBtn")?.addEventListener("click", () => {
       this.activeSemIndex = 0;
       this.switchView("roadmap");
@@ -1484,12 +1712,10 @@ class PlacementOSApp {
                     <td style="color:var(--ink-secondary); font-size:0.82rem; max-width:260px;">
                       ${skill.benchmark}
                     </td>
-                    <td style="width:200px;">
-                      <div style="display:flex; align-items:center; gap:0.6rem;">
-                        <div class="focus-progress-bar" style="flex:1;">
-                          <div class="focus-progress-fill" style="width:${pct}%;"></div>
-                        </div>
-                        <span style="font-weight:600; font-size:0.8rem; width:32px;">${pct}%</span>
+                    <td style="width:220px;">
+                      <div style="display:flex; align-items:center; gap:0.65rem;">
+                        ${this.renderDotProgress(pct, 10)}
+                        <span style="font-weight:600; font-size:0.8rem; width:34px; text-align:right;">${pct}%</span>
                       </div>
                     </td>
                     <td>
@@ -1997,17 +2223,34 @@ class PlacementOSApp {
           </div>
         </div>
 
-        <!-- Placement Readiness Score Card -->
-        <div class="card">
-          <div class="section-title-wrap">
-            <div class="section-title">
-              <span>🎯</span> Placement Readiness Index: 38 / 100
+        <!-- Placement Readiness Score Card with Large Donut Ring -->
+        <div class="card readiness-donut-card">
+          <div class="donut-card-layout">
+            <div class="donut-chart-container">
+              <svg viewBox="0 0 120 120" class="donut-chart-svg">
+                <circle class="donut-ring-bg" cx="60" cy="60" r="48" stroke="var(--mint)" stroke-width="10" fill="none" />
+                <circle class="donut-ring-fill" cx="60" cy="60" r="48" stroke="var(--dark)" stroke-width="10" stroke-dasharray="301.59" stroke-dashoffset="${(301.59 - (301.59 * 0.38)).toFixed(2)}" stroke-linecap="round" fill="none" transform="rotate(-90 60 60)" />
+                <text x="60" y="58" class="donut-text-val" text-anchor="middle">38</text>
+                <text x="60" y="74" class="donut-text-lbl" text-anchor="middle">/ 100</text>
+              </svg>
             </div>
-            <span class="status-pill-crm Interview">Semester 3 Target: 35+</span>
+            <div class="donut-card-info">
+              <div class="section-title-wrap" style="margin-bottom:0.5rem;">
+                <div class="section-title">
+                  <span>🎯</span> Placement Readiness Index: 38 / 100
+                </div>
+                <span class="status-pill-crm Interview">Semester 3 Benchmark: 35+</span>
+              </div>
+              <p style="font-size:0.86rem; color:var(--ink-secondary); line-height:1.5;">
+                Calculated across verified skill topics in Supabase, DSA problem counts (42/150), SQL targets (68/150), and Project #1 deliverables. You are tracking ahead of schedule for Semester 3.
+              </p>
+              <div class="donut-metric-tags">
+                <span class="donut-tag">● Python Core: 72%</span>
+                <span class="donut-tag">● Algorithmic DSA: 28%</span>
+                <span class="donut-tag">● Major Project MVP: 33%</span>
+              </div>
+            </div>
           </div>
-          <p style="font-size:0.86rem; color:var(--ink-secondary); line-height:1.5;">
-            Calculated across verified skill topics in Supabase, DSA problem counts (42/150), SQL targets (68/150), and Project #1 deliverables. You are tracking ahead of schedule for Semester 3.
-          </p>
         </div>
       </div>
     `;

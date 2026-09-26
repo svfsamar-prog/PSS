@@ -111,92 +111,61 @@
 
     <!-- App Body (Sidebar + Main Content Area) -->
     <div class="app-body">
-      <!-- Left Sidebar (Desktop) -->
-      <aside class="app-sidebar">
-        <div>
-          <!-- Group 1: Overview -->
-          <div class="sidebar-nav-group">
-            <div class="sidebar-group-title">Overview</div>
-            <ul class="sidebar-menu">
-              <li>
-                <button class="sidebar-btn active" data-nav-view="dashboard">
-                  <span class="icon">📊</span>
-                  <span>Dashboard</span>
-                </button>
-              </li>
-              <li>
-                <button class="sidebar-btn" data-nav-view="roadmap">
-                  <span class="icon">🗺️</span>
-                  <span>Roadmap</span>
-                </button>
-              </li>
-              <li>
-                <button class="sidebar-btn" data-nav-view="skills">
-                  <span class="icon">⚡</span>
-                  <span>Skills Matrix</span>
-                </button>
-              </li>
-              <li>
-                <button class="sidebar-btn" data-nav-view="projects">
-                  <span class="icon">🚀</span>
-                  <span>Projects</span>
-                </button>
-              </li>
-              <li>
-                <button class="sidebar-btn" data-nav-view="practice">
-                  <span class="icon">💻</span>
-                  <span>DSA & SQL</span>
-                </button>
-              </li>
-              <li>
-                <button class="sidebar-btn" data-nav-view="career">
-                  <span class="icon">💼</span>
-                  <span>Career CRM</span>
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          <!-- Group 2: Resources & Insights -->
-          <div class="sidebar-nav-group">
-            <div class="sidebar-group-title">Resources</div>
-            <ul class="sidebar-menu">
-              <li>
-                <button class="sidebar-btn" data-nav-view="rhythm">
-                  <span class="icon">📅</span>
-                  <span>Weekly Rhythm</span>
-                </button>
-              </li>
-              <li>
-                <button class="sidebar-btn" data-nav-view="targets">
-                  <span class="icon">🎯</span>
-                  <span>Placement Targets</span>
-                </button>
-              </li>
-              <li>
-                <button class="sidebar-btn" data-nav-view="analytics">
-                  <span class="icon">📈</span>
-                  <span>Learning Analytics</span>
-                </button>
-              </li>
-              <li>
-                <button class="sidebar-btn" data-nav-view="export">
-                  <span class="icon">📥</span>
-                  <span>Backup & Export</span>
-                </button>
-              </li>
-            </ul>
-          </div>
+      <!-- Thin Floating Vertical Rail (Desktop) -->
+      <aside class="app-sidebar floating-rail">
+        <div class="rail-nav-group">
+          <button class="rail-btn active" data-nav-view="dashboard" title="Dashboard">
+            <span class="rail-icon">📊</span>
+            <span class="rail-label">Home</span>
+          </button>
+          <button class="rail-btn" data-nav-view="roadmap" title="Curriculum Roadmap">
+            <span class="rail-icon">🗺️</span>
+            <span class="rail-label">Roadmap</span>
+          </button>
+          <button class="rail-btn" data-nav-view="skills" title="Skills Matrix">
+            <span class="rail-icon">⚡</span>
+            <span class="rail-label">Skills</span>
+          </button>
+          <button class="rail-btn" data-nav-view="projects" title="Portfolio Projects">
+            <span class="rail-icon">🚀</span>
+            <span class="rail-label">Projects</span>
+          </button>
+          <button class="rail-btn" data-nav-view="practice" title="DSA & SQL Practice">
+            <span class="rail-icon">💻</span>
+            <span class="rail-label">Practice</span>
+          </button>
+          <button class="rail-btn" data-nav-view="career" title="Career Applications CRM">
+            <span class="rail-icon">💼</span>
+            <span class="rail-label">Career</span>
+          </button>
         </div>
 
-        <!-- Sidebar Current Focus Mini Card -->
-        <div class="sidebar-focus-card">
-          <div class="label">Current Focus · Sem 3</div>
-          <div class="topic" id="sidebarFocusTopic">Python + SQL + DSA</div>
-          <div class="progress-line">
-            <div class="progress-fill" id="sidebarFocusFill" style="width: 34%;"></div>
-          </div>
-          <button class="action-btn" id="sidebarFocusBtn">Continue Roadmap →</button>
+        <div class="rail-divider"></div>
+
+        <div class="rail-nav-group">
+          <button class="rail-btn" data-nav-view="analytics" title="Learning Analytics">
+            <span class="rail-icon">📈</span>
+            <span class="rail-label">Analytics</span>
+          </button>
+          <button class="rail-btn" data-nav-view="rhythm" title="Weekly Rhythm">
+            <span class="rail-icon">📅</span>
+            <span class="rail-label">Rhythm</span>
+          </button>
+          <button class="rail-btn" data-nav-view="targets" title="Placement Targets">
+            <span class="rail-icon">🎯</span>
+            <span class="rail-label">Targets</span>
+          </button>
+          <button class="rail-btn" data-nav-view="export" title="Backup & Export">
+            <span class="rail-icon">📥</span>
+            <span class="rail-label">Export</span>
+          </button>
+        </div>
+
+        <div class="rail-footer">
+          <button class="rail-focus-pill" id="sidebarFocusBtn" title="Current Focus: Sem 3 Foundations (Click to jump)">
+            <span class="pulse-indicator"></span>
+            <span class="rail-focus-text">S3</span>
+          </button>
         </div>
       </aside>
 
