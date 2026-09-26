@@ -18,6 +18,7 @@ import {
 
 import { db } from "./supabase.js";
 import { exportToCSV, exportToPDF, exportBackupJSON } from "./export.js";
+import { OWNER } from "./profile-config.js";
 
 class PlacementOSApp {
   constructor() {
@@ -36,9 +37,49 @@ class PlacementOSApp {
     this.studyHours = {};
     this.isLoading = true;
 
+    this.applyOwnerPersonalization();
     this.initDOM();
     this.bindEvents();
     this.checkAuthAndStart();
+  }
+
+  applyOwnerPersonalization() {
+    // Document title and meta description
+    document.title = `${OWNER.brandName} · ${OWNER.name}`;
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc) {
+      metaDesc.setAttribute("content", `${OWNER.brandName} - Personal academic, roadmap, projects, skills, and placement tracker for ${OWNER.name}`);
+    }
+
+    // Print headers
+    const printTitle = document.getElementById("printHeaderTitle");
+    if (printTitle) printTitle.textContent = `${OWNER.brandName} — Preparation Report & Curriculum Checklist`;
+    const printSub = document.getElementById("printHeaderSubtitle");
+    if (printSub) {
+      printSub.innerHTML = `Candidate: ${OWNER.name} · ${OWNER.degree} · Generated on <span id="printDate">${new Date().toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}</span>`;
+    }
+
+    // Topbar breadcrumb and brand chip
+    const breadcrumbRoot = document.getElementById("breadcrumbRoot");
+    if (breadcrumbRoot) breadcrumbRoot.textContent = OWNER.brandName;
+    const brandChip = document.getElementById("brandHomeBtn");
+    if (brandChip) brandChip.title = `${OWNER.brandName} Home`;
+
+    // Auth screen copy
+    const authTitle = document.getElementById("authTitle");
+    if (authTitle) authTitle.textContent = OWNER.brandName;
+    const authSubmitText = document.getElementById("authSubmitText");
+    if (authSubmitText) authSubmitText.textContent = `Sign In to ${OWNER.brandName}`;
+    const authBadgeInitials = document.getElementById("authBadgeInitials");
+    if (authBadgeInitials) authBadgeInitials.textContent = OWNER.initials;
+
+    // Default topbar and popover identity
+    const profileName = document.getElementById("userProfileName");
+    if (profileName) profileName.textContent = OWNER.shortName;
+    const popName = document.getElementById("popoverUserName");
+    if (popName) popName.textContent = OWNER.name;
+    const popRole = document.getElementById("popoverUserRole");
+    if (popRole) popRole.textContent = OWNER.degree;
   }
 
   checkAuthAndStart() {
@@ -52,7 +93,7 @@ class PlacementOSApp {
       if (authWrapper) authWrapper.style.display = "none";
       const user = db.getUser();
       const profileName = document.getElementById("userProfileName");
-      if (profileName) profileName.textContent = user?.email ? user.email.split("@")[0] : "Samar";
+      if (profileName) profileName.textContent = user?.email ? user.email.split("@")[0] : OWNER.shortName;
       this.loadFromSupabase();
     }
   }
@@ -65,10 +106,32 @@ class PlacementOSApp {
     const togglePwdBtn = document.getElementById("togglePwdBtn");
     const pwdInput = document.getElementById("loginPassword");
     const emailInput = document.getElementById("loginEmail");
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // Asymmetric droplet wobble and coordinate ripple on press
+    submitBtn?.addEventListener("pointerdown", (e) => {
+      if (prefersReducedMotion) return;
+      const rect = submitBtn.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      submitBtn.style.setProperty("--ripple-x", `${x}%`);
+      submitBtn.style.setProperty("--ripple-y", `${y}%`);
+
+      submitBtn.classList.remove("rippling");
+      void submitBtn.offsetWidth; // trigger reflow
+      submitBtn.classList.add("rippling");
+      submitBtn.classList.add("wobble");
+
+      setTimeout(() => submitBtn.classList.remove("wobble"), 500);
+      setTimeout(() => submitBtn.classList.remove("rippling"), 600);
+    });
+
     togglePwdBtn?.addEventListener("click", () => {
       const type = pwdInput.getAttribute("type") === "password" ? "text" : "password";
       pwdInput.setAttribute("type", type);
-      togglePwdBtn.textContent = type === "password" ? "👁️" : "🙈";
+      togglePwdBtn.innerHTML = type === "password"
+        ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`
+        : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`;
     });
 
     form?.addEventListener("submit", async (e) => {
@@ -86,9 +149,9 @@ class PlacementOSApp {
         if (authWrapper) authWrapper.style.display = "none";
 
         const profileName = document.getElementById("userProfileName");
-        if (profileName) profileName.textContent = email.split("@")[0];
+        if (profileName) profileName.textContent = email.split("@")[0] || OWNER.shortName;
 
-        this.showToast("Welcome back, Samar! Authenticated via Supabase.");
+        this.showToast(`Welcome back, ${OWNER.shortName}! Authenticated via Supabase.`);
         this.loadFromSupabase();
       } catch (err) {
         console.error("Login failed:", err);
@@ -96,7 +159,7 @@ class PlacementOSApp {
         errorBanner.classList.add("show");
       } finally {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = `<span>Sign In to Placement OS</span> <span>→</span>`;
+        submitBtn.innerHTML = `<span>Sign In to ${OWNER.brandName}</span> <span>→</span>`;
       }
     });
   }
@@ -117,9 +180,9 @@ class PlacementOSApp {
       ]);
 
       this.profile = profileData || {
-        candidate_name: "Samar Raj",
-        degree: "BCA (Data Science / AI-ML)",
-        current_semester: 3,
+        candidate_name: OWNER.name,
+        degree: OWNER.degree,
+        current_semester: OWNER.currentSemester,
         dsa_solved: 0,
         sql_solved: 0,
         internships_done: 0,
@@ -350,7 +413,7 @@ class PlacementOSApp {
 
     // Sign Out Button
     document.getElementById("signOutBtn")?.addEventListener("click", () => {
-      if (confirm("Sign out of Placement OS?")) {
+      if (confirm(`Sign out of ${OWNER.brandName}?`)) {
         db.signOut();
         const authWrapper = document.getElementById("authWrapper");
         if (authWrapper) authWrapper.style.display = "flex";
@@ -443,7 +506,12 @@ class PlacementOSApp {
           this.closeCommandPalette();
         } 
       },
-      { id: "a_out", type: "action", title: "Sign Out of Placement OS", icon: iconSvg('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>'), tag: "Auth", action: () => {
+      { id: "a_pub_profile", type: "action", title: "View Public Profile (Recruiter Link)", icon: iconSvg('<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>'), tag: "Profile", action: () => {
+          this.closeCommandPalette();
+          window.open("public-profile.html", "_blank");
+        }
+      },
+      { id: "a_out", type: "action", title: `Sign Out of ${OWNER.brandName}`, icon: iconSvg('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>'), tag: "Auth", action: () => {
           this.closeCommandPalette();
           document.getElementById("signOutBtn")?.click();
         } 
@@ -762,7 +830,7 @@ class PlacementOSApp {
             <span class="hero-headline-accent">journey.</span>
           </h1>
           <p class="hero-subtext">
-            Personalized academic roadmap, algorithmic practice, and production systems tracker for <b>Samar Raj</b> · BCA (Data Science & AI-ML).
+            Personalized academic roadmap, algorithmic practice, and production systems tracker for <b>${OWNER.name}</b> · ${OWNER.degree}.
           </p>
           <div class="hero-actions">
             <button class="btn-hero-primary" id="dashViewRoadmapBtn">
@@ -860,8 +928,8 @@ class PlacementOSApp {
               <rect x="0" y="0" width="134" height="46" rx="12" fill="#FFFFFF" stroke="#E1E8E3" stroke-width="1.5" />
               <circle cx="23" cy="23" r="11" fill="#E7F45B" stroke="#111513" stroke-width="1" />
               <path d="M18 23 L21 26 L28 19" stroke="#111513" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-              <text x="42" y="20" font-size="10" font-weight="700" fill="#181C19">Samar Raj</text>
-              <text x="42" y="33" font-size="8" font-weight="600" fill="#78827C">BCA AI/ML · Sem 3</text>
+              <text x="42" y="20" font-size="10" font-weight="700" fill="#181C19">${OWNER.name}</text>
+              <text x="42" y="33" font-size="8" font-weight="600" fill="#78827C">${OWNER.degree.split(" ")[0]} AI/ML · Sem ${OWNER.currentSemester}</text>
             </g>
 
             <!-- Geometric Cubes Floating in Scene -->
@@ -1438,7 +1506,7 @@ class PlacementOSApp {
           <div>
             <h2 class="welcome-title">Semester Roadmap</h2>
             <div class="welcome-sub">
-              Targeted academic & placement curriculum milestones for Samar Raj
+              Targeted academic & placement curriculum milestones for ${OWNER.name}
             </div>
           </div>
           <button class="btn-primary" id="openAddTaskRoadmapBtn">＋ Add Goal to Supabase</button>
@@ -2546,7 +2614,10 @@ class PlacementOSApp {
         <!-- Hero Profile Banner Card -->
         <section class="profile-hero-card">
           <div class="profile-hero-left">
-            <div class="profile-avatar-giant">${initials}</div>
+            <div class="profile-avatar-giant">
+              <img src="${OWNER.avatarPath}" alt="${name}" class="avatar-photo-img" onload="this.style.display='block'; if(this.nextElementSibling) this.nextElementSibling.style.display='none';" onerror="this.style.display='none';" style="display:none;">
+              <span class="avatar-fallback-initials">${initials}</span>
+            </div>
             <div class="profile-hero-details">
               <h1>
                 <span>${name}</span>
@@ -2559,11 +2630,15 @@ class PlacementOSApp {
               <div class="profile-hero-meta">
                 <span class="profile-hero-meta-item">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-                  samarrajxyz@gmail.com
+                  ${OWNER.email}
+                </span>
+                <span class="profile-hero-meta-item">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                  ${OWNER.phone} <span style="font-size:0.7rem; color:var(--ink-muted);">(private)</span>
                 </span>
                 <span class="profile-hero-meta-item">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-                  Target Batch 2026
+                  ${OWNER.targetBatch}
                 </span>
                 <span class="profile-hero-meta-item">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -2774,28 +2849,52 @@ class PlacementOSApp {
             </div>
 
             <div class="profile-links-list">
-              <a href="https://github.com/samarraj" target="_blank" rel="noopener" class="profile-link-btn">
-                <div style="display:flex; align-items:center; gap:0.65rem;">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
-                  <span>GitHub Profile</span>
-                </div>
-                <span style="font-size:0.78rem; color:var(--ink-muted);">github.com/samarraj ↗</span>
-              </a>
-
-              <a href="https://linkedin.com/in/samarraj" target="_blank" rel="noopener" class="profile-link-btn">
+              <!-- Primary Tier: Equal-weight professional buttons -->
+              <a href="${OWNER.links.linkedin}" target="_blank" rel="noopener" class="profile-link-btn primary-tier">
                 <div style="display:flex; align-items:center; gap:0.65rem;">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
                   <span>LinkedIn Professional Network</span>
                 </div>
-                <span style="font-size:0.78rem; color:var(--ink-muted);">linkedin.com/in/samarraj ↗</span>
+                <span style="font-size:0.78rem; color:var(--ink-muted);">linkedin.com/in/samar-raj-x ↗</span>
               </a>
 
-              <a href="https://leetcode.com/samarrajxyz" target="_blank" rel="noopener" class="profile-link-btn">
+              <a href="${OWNER.links.github}" target="_blank" rel="noopener" class="profile-link-btn primary-tier">
                 <div style="display:flex; align-items:center; gap:0.65rem;">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-                  <span>LeetCode Competitive Handle</span>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+                  <span>GitHub Repositories</span>
                 </div>
-                <span style="font-size:0.78rem; color:var(--ink-muted);">samarrajxyz ↗</span>
+                <span style="font-size:0.78rem; color:var(--ink-muted);">github.com/samarrajx ↗</span>
+              </a>
+
+              <a href="${OWNER.links.unstop}" target="_blank" rel="noopener" class="profile-link-btn primary-tier">
+                <div style="display:flex; align-items:center; gap:0.65rem;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polygon points="12 6 12 12 16 14"/></svg>
+                  <span>Unstop Competitions & Track</span>
+                </div>
+                <span style="font-size:0.78rem; color:var(--ink-muted);">unstop.com/u/samarraj72965 ↗</span>
+              </a>
+
+              <a href="${OWNER.links.googleSkills}" target="_blank" rel="noopener" class="profile-link-btn primary-tier">
+                <div style="display:flex; align-items:center; gap:0.65rem;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+                  <span>Google Cloud Skills Profile</span>
+                </div>
+                <span style="font-size:0.78rem; color:var(--ink-muted);">Verified Badges ↗</span>
+              </a>
+
+              <!-- Secondary Tier: Visually Muted Personal Link -->
+              <a href="${OWNER.links.instagram}" target="_blank" rel="noopener" class="profile-link-btn secondary-tier">
+                <div style="display:flex; align-items:center; gap:0.65rem;">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                  <span>Instagram <span class="personal-badge">(personal)</span></span>
+                </div>
+                <span style="font-size:0.75rem; color:var(--ink-muted);">@samarraj.x ↗</span>
+              </a>
+
+              <!-- Share Public Profile Button -->
+              <a href="public-profile.html" target="_blank" rel="noopener" class="share-public-profile-btn" id="sharePublicProfileBtn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                <span>Share Public Profile (Recruiter View) ↗</span>
               </a>
             </div>
 

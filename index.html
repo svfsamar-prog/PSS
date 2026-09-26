@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#2E6B56">
-  <meta name="description" content="Placement OS - Personal academic, roadmap, projects, skills, and placement tracker for Samar Raj">
-  <title>Placement OS · Samar Raj</title>
+  <meta name="description" content="Samar's Career OS - Personal academic, roadmap, projects, skills, and placement tracker for Samar Raj">
+  <title>Samar's Career OS · Samar Raj</title>
 
   <!-- Google Fonts: Inter (UI) & Merriweather/Playfair/Georgia fallback -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,8 +19,8 @@
     
     <!-- Printable Header (Only appears on PDF / Print) -->
     <div class="print-header">
-      <h1>Placement OS — Preparation Report & Curriculum Checklist</h1>
-      <p>Candidate: Samar Raj · BCA (Data Science / AI-ML) · Generated on <span id="printDate"></span></p>
+      <h1 id="printHeaderTitle">Samar's Career OS — Preparation Report & Curriculum Checklist</h1>
+      <p id="printHeaderSubtitle">Candidate: Samar Raj · BCA (Data Science / AI-ML) · Generated on <span id="printDate"></span></p>
     </div>
 
     <!-- Top Application Bar (Modern Quiet-Chrome & Slim Header) -->
@@ -33,15 +33,15 @@
           <span></span>
         </button>
 
-        <a class="brand-chip" href="#" id="brandHomeBtn" title="Placement OS Home">
+        <a class="brand-chip" href="#" id="brandHomeBtn" title="Samar's Career OS Home">
           <div class="brand-badge">
             <span class="brand-glow"></span>
-            <span class="brand-initials">P/OS</span>
+            <span class="brand-initials">S/OS</span>
           </div>
         </a>
 
         <div class="topbar-breadcrumb">
-          <span class="breadcrumb-root">Placement OS</span>
+          <span class="breadcrumb-root" id="breadcrumbRoot">Samar's Career OS</span>
           <span class="breadcrumb-sep">/</span>
           <span class="breadcrumb-page" id="topbarCurrentView">Dashboard</span>
           <span class="breadcrumb-pill">Sem 3</span>
@@ -82,7 +82,10 @@
         <!-- User Profile Dropdown Pill -->
         <div class="user-dropdown-wrapper">
           <button class="user-chip" id="userMenuToggleBtn" aria-expanded="false" title="Candidate profile & options">
-            <div class="user-avatar-dot">SR</div>
+            <div class="user-avatar-dot">
+              <img src="assets/profile-photo.jpg" alt="Samar Raj" class="avatar-photo-img" onload="this.style.display='block'; if(this.nextElementSibling) this.nextElementSibling.style.display='none';" onerror="this.style.display='none';" style="display:none;">
+              <span class="avatar-fallback-initials">SR</span>
+            </div>
             <span class="user-name" id="userProfileName">Samar</span>
             <span class="user-caret">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
@@ -92,7 +95,10 @@
           <div class="user-dropdown-popover" id="userDropdownMenu">
             <div class="popover-profile" id="popoverHeaderProfile" role="button" tabindex="0" title="Click to view candidate profile">
               <div class="popover-profile-header">
-                <div class="user-avatar-dot">SR</div>
+                <div class="user-avatar-dot">
+                  <img src="assets/profile-photo.jpg" alt="Samar Raj" class="avatar-photo-img" onload="this.style.display='block'; if(this.nextElementSibling) this.nextElementSibling.style.display='none';" onerror="this.style.display='none';" style="display:none;">
+                  <span class="avatar-fallback-initials">SR</span>
+                </div>
                 <div>
                   <div class="popover-name" id="popoverUserName">Samar Raj</div>
                   <div class="popover-role" id="popoverUserRole">BCA · Data Science / AI-ML</div>
@@ -403,13 +409,23 @@
     </div>
   </div>
 
-  <!-- Authentication / Login Screen Gate -->
+  <!-- Authentication / Login Screen Gate (Light Water-Morphic) -->
   <div class="auth-wrapper" id="authWrapper" style="display: none;">
+    <!-- Ambient Slow-Drifting Orbs (Mint / Primary-Green / Lime) -->
+    <div class="auth-ambient-blobs" aria-hidden="true">
+      <div class="auth-orb auth-orb-1"></div>
+      <div class="auth-orb auth-orb-2"></div>
+      <div class="auth-orb auth-orb-3"></div>
+    </div>
+
     <div class="auth-card">
       <div class="auth-header">
-        <div class="auth-logo-badge">OS</div>
-        <h2 class="auth-title">Placement OS</h2>
-        <p class="auth-subtitle">Candidate Authentication · Sem 3 → Sem 6</p>
+        <div class="auth-logo-badge" id="authLogoBadge">
+          <img src="assets/profile-photo.jpg" alt="Samar Raj" class="avatar-photo-img" onload="this.style.display='block'; if(this.nextElementSibling) this.nextElementSibling.style.display='none';" onerror="this.style.display='none';" style="display:none;">
+          <span class="avatar-fallback-initials" id="authBadgeInitials">SR</span>
+        </div>
+        <h2 class="auth-title" id="authTitle">Samar's Career OS</h2>
+        <p class="auth-subtitle" id="authSubtitle">Candidate Authentication · Sem 3 → Sem 6</p>
       </div>
 
       <div class="auth-error-banner" id="authErrorBanner">
@@ -436,7 +452,7 @@
         </div>
 
         <button type="submit" class="auth-submit-btn" id="loginSubmitBtn">
-          <span>Sign In to Placement OS</span> <span>→</span>
+          <span id="authSubmitText">Sign In to Samar's Career OS</span> <span>→</span>
         </button>
       </form>
 
