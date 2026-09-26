@@ -117,11 +117,32 @@ class PlacementOSApp {
       ]);
 
       this.profile = profileData || {
+        candidate_name: "Samar Raj",
+        degree: "BCA (Data Science / AI-ML)",
+        current_semester: 3,
         dsa_solved: 0,
         sql_solved: 0,
         internships_done: 0,
-        certifications_done: 0
+        certifications_done: 0,
+        target_dsa: 150,
+        target_sql: 150,
+        target_internships: 2,
+        target_certifications: 4
       };
+
+      // Update topbar and popover candidate details
+      const nameEl = document.getElementById("userProfileName");
+      if (nameEl && this.profile.candidate_name) {
+        nameEl.textContent = this.profile.candidate_name.split(" ")[0];
+      }
+      const popNameEl = document.getElementById("popoverUserName");
+      if (popNameEl && this.profile.candidate_name) {
+        popNameEl.textContent = this.profile.candidate_name;
+      }
+      const popRoleEl = document.getElementById("popoverUserRole");
+      if (popRoleEl && this.profile.degree) {
+        popRoleEl.textContent = this.profile.degree;
+      }
 
       // Map tasks
       this.taskState = {};
@@ -223,13 +244,17 @@ class PlacementOSApp {
       this.switchView("dashboard");
     });
 
-    // Theme toggle
+    // Theme toggle with crisp modern SVGs
     this.dom.themeToggleBtn?.addEventListener("click", () => {
       const current = document.documentElement.getAttribute("data-theme");
       const nextTheme = current === "dark" ? "light" : "dark";
       document.documentElement.setAttribute("data-theme", nextTheme);
       const icon = document.getElementById("themeToggleIcon");
-      if (icon) icon.textContent = nextTheme === "dark" ? "☀️" : "🌙";
+      if (icon) {
+        icon.innerHTML = nextTheme === "dark"
+          ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`
+          : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+      }
     });
 
     // User Profile Dropdown Toggle
@@ -238,6 +263,12 @@ class PlacementOSApp {
     userMenuBtn?.addEventListener("click", (e) => {
       e.stopPropagation();
       userDropdown?.classList.toggle("show");
+    });
+
+    // Popover Profile Card Header click -> Open Profile Page
+    document.getElementById("popoverHeaderProfile")?.addEventListener("click", () => {
+      userDropdown?.classList.remove("show");
+      this.switchView("profile");
     });
 
     window.addEventListener("click", (e) => {
@@ -350,6 +381,17 @@ class PlacementOSApp {
       e.preventDefault();
       this.handleAddAppSubmit();
     });
+
+    // Edit Profile Modal events
+    document.getElementById("closeProfileModalBtn")?.addEventListener("click", () => this.closeEditProfileModal());
+    document.getElementById("cancelProfileModalBtn")?.addEventListener("click", () => this.closeEditProfileModal());
+    document.getElementById("editProfileModal")?.addEventListener("click", (e) => {
+      if (e.target.id === "editProfileModal") this.closeEditProfileModal();
+    });
+    document.getElementById("editProfileForm")?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      this.handleEditProfileSubmit();
+    });
   }
 
   /* ==========================================================================
@@ -373,29 +415,35 @@ class PlacementOSApp {
   }
 
   getCommandPaletteItems() {
+    const iconSvg = (d) => `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
     return [
-      { id: "v_dash", type: "view", title: "Go to Dashboard", icon: "📊", tag: "View", action: () => this.switchView("dashboard") },
-      { id: "v_road", type: "view", title: "Curriculum Roadmap (Sem 3 → Sem 6)", icon: "🗺️", tag: "View", action: () => this.switchView("roadmap") },
-      { id: "v_skill", type: "view", title: "Skills Matrix & Mastery Index", icon: "⚡", tag: "View", action: () => this.switchView("skills") },
-      { id: "v_proj", type: "view", title: "Portfolio Projects Deck (4 Production Apps)", icon: "🚀", tag: "View", action: () => this.switchView("projects") },
-      { id: "v_prac", type: "view", title: "DSA & SQL Practice Tracker", icon: "💻", tag: "View", action: () => this.switchView("practice") },
-      { id: "v_car", type: "view", title: "Career Applications CRM", icon: "💼", tag: "View", action: () => this.switchView("career") },
-      { id: "v_ana", type: "view", title: "Learning Analytics & Study Velocity", icon: "📈", tag: "View", action: () => this.switchView("analytics") },
-      { id: "v_rhy", type: "view", title: "Weekly Rhythm & Routine", icon: "📅", tag: "View", action: () => this.switchView("rhythm") },
-      { id: "v_tar", type: "view", title: "Placement Target Roles & Tiers", icon: "🎯", tag: "View", action: () => this.switchView("targets") },
-      { id: "v_exp", type: "view", title: "Backup Data & Cloud Export", icon: "📥", tag: "View", action: () => this.switchView("export") },
-      { id: "a_goal", type: "action", title: "Add Custom Placement Goal", icon: "＋", tag: "Action", action: () => { this.closeCommandPalette(); this.openAddTaskModal(); } },
-      { id: "a_app", type: "action", title: "Log Job / Internship Application", icon: "📝", tag: "Action", action: () => { this.closeCommandPalette(); this.openAddAppModal(); } },
-      { id: "a_theme", type: "action", title: "Toggle Dark / Light Theme", icon: "🌓", tag: "Theme", action: () => { 
+      { id: "v_dash", type: "view", title: "Go to Dashboard", icon: iconSvg('<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>'), tag: "View", action: () => this.switchView("dashboard") },
+      { id: "v_prof", type: "view", title: "Candidate Profile & Credentials", icon: iconSvg('<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'), tag: "View", action: () => this.switchView("profile") },
+      { id: "v_road", type: "view", title: "Curriculum Roadmap (Sem 3 → Sem 6)", icon: iconSvg('<circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>'), tag: "View", action: () => this.switchView("roadmap") },
+      { id: "v_skill", type: "view", title: "Skills Matrix & Mastery Index", icon: iconSvg('<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>'), tag: "View", action: () => this.switchView("skills") },
+      { id: "v_proj", type: "view", title: "Portfolio Projects Deck (4 Production Apps)", icon: iconSvg('<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>'), tag: "View", action: () => this.switchView("projects") },
+      { id: "v_prac", type: "view", title: "DSA & SQL Practice Tracker", icon: iconSvg('<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>'), tag: "View", action: () => this.switchView("practice") },
+      { id: "v_car", type: "view", title: "Career Applications CRM", icon: iconSvg('<rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>'), tag: "View", action: () => this.switchView("career") },
+      { id: "v_ana", type: "view", title: "Learning Analytics & Study Velocity", icon: iconSvg('<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>'), tag: "View", action: () => this.switchView("analytics") },
+      { id: "v_rhy", type: "view", title: "Weekly Rhythm & Routine", icon: iconSvg('<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>'), tag: "View", action: () => this.switchView("rhythm") },
+      { id: "v_tar", type: "view", title: "Placement Target Roles & Tiers", icon: iconSvg('<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>'), tag: "View", action: () => this.switchView("targets") },
+      { id: "v_exp", type: "view", title: "Backup Data & Cloud Export", icon: iconSvg('<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>'), tag: "View", action: () => this.switchView("export") },
+      { id: "a_goal", type: "action", title: "Add Custom Placement Goal", icon: iconSvg('<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>'), tag: "Action", action: () => { this.closeCommandPalette(); this.openAddTaskModal(); } },
+      { id: "a_app", type: "action", title: "Log Job / Internship Application", icon: iconSvg('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>'), tag: "Action", action: () => { this.closeCommandPalette(); this.openAddAppModal(); } },
+      { id: "a_theme", type: "action", title: "Toggle Dark / Light Theme", icon: iconSvg('<circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 0 0 20z"/>'), tag: "Theme", action: () => { 
           const current = document.documentElement.getAttribute("data-theme");
           const next = current === "dark" ? "light" : "dark";
           document.documentElement.setAttribute("data-theme", next);
           const icon = document.getElementById("themeToggleIcon");
-          if (icon) icon.textContent = next === "dark" ? "☀️" : "🌙";
+          if (icon) {
+            icon.innerHTML = next === "dark"
+              ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`
+              : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
+          }
           this.closeCommandPalette();
         } 
       },
-      { id: "a_out", type: "action", title: "Sign Out of Placement OS", icon: "🚪", tag: "Auth", action: () => {
+      { id: "a_out", type: "action", title: "Sign Out of Placement OS", icon: iconSvg('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>'), tag: "Auth", action: () => {
           this.closeCommandPalette();
           document.getElementById("signOutBtn")?.click();
         } 
@@ -567,7 +615,8 @@ class PlacementOSApp {
         analytics: "Learning Analytics",
         rhythm: "Weekly Rhythm",
         targets: "Placement Targets",
-        export: "Backup & Cloud Export"
+        export: "Backup & Cloud Export",
+        profile: "Candidate Profile"
       };
       topbarViewEl.textContent = viewNames[viewName] || "Dashboard";
     }
@@ -600,6 +649,9 @@ class PlacementOSApp {
     switch (this.activeView) {
       case "dashboard":
         this.renderDashboardView();
+        break;
+      case "profile":
+        this.renderProfileView();
         break;
       case "roadmap":
         this.renderRoadmapView();
@@ -2457,6 +2509,412 @@ class PlacementOSApp {
         this.showToast("All tasks reset in Supabase database");
       }
     });
+  }
+
+  /* ==========================================================================
+     VIEW: CANDIDATE PROFILE & CREDENTIALS
+     ========================================================================== */
+  renderProfileView() {
+    const stats = this.calculateStats();
+    const dsaSolved = this.profile?.dsa_solved ?? 0;
+    const targetDsa = this.profile?.target_dsa ?? 150;
+    const sqlSolved = this.profile?.sql_solved ?? 0;
+    const targetSql = this.profile?.target_sql ?? 150;
+    const internDone = this.profile?.internships_done ?? 0;
+    const targetIntern = this.profile?.target_internships ?? 2;
+    const certDone = this.profile?.certifications_done ?? 0;
+    const targetCert = this.profile?.target_certifications ?? 4;
+
+    const dsaPct = Math.min(100, Math.round((dsaSolved / targetDsa) * 100));
+    const sqlPct = Math.min(100, Math.round((sqlSolved / targetSql) * 100));
+    const internPct = Math.min(100, Math.round((internDone / targetIntern) * 100));
+    const certPct = Math.min(100, Math.round((certDone / targetCert) * 100));
+
+    const readinessIndex = Math.min(100, Math.round(
+      (stats.overallPct * 0.35) +
+      (dsaPct * 0.35) +
+      ((stats.completedProjectsCount / 3) * 100 * 0.30)
+    ));
+
+    const name = this.profile?.candidate_name || "Samar Raj";
+    const degree = this.profile?.degree || "BCA (Data Science / AI-ML)";
+    const initials = name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase() || "SR";
+    const currentSem = this.profile?.current_semester || 3;
+
+    const html = `
+      <div class="profile-view-wrapper">
+        <!-- Hero Profile Banner Card -->
+        <section class="profile-hero-card">
+          <div class="profile-hero-left">
+            <div class="profile-avatar-giant">${initials}</div>
+            <div class="profile-hero-details">
+              <h1>
+                <span>${name}</span>
+                <span class="profile-verified-badge">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+                  Verified Candidate
+                </span>
+              </h1>
+              <div class="profile-hero-subtitle">${degree} · Semester ${currentSem}</div>
+              <div class="profile-hero-meta">
+                <span class="profile-hero-meta-item">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                  samarrajxyz@gmail.com
+                </span>
+                <span class="profile-hero-meta-item">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                  Target Batch 2026
+                </span>
+                <span class="profile-hero-meta-item">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  Active Placement Season
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="profile-hero-actions">
+            <button class="btn-primary" id="editProfileBtn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              <span>Edit Profile</span>
+            </button>
+            <button class="btn-outline" id="profileViewTargetsBtn">
+              <span>View Targets →</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- Bento Grid: Details & Metrics -->
+        <div class="profile-bento-grid">
+          <!-- Card 1: Live Placement Performance Metrics -->
+          <div class="card">
+            <div class="section-title-wrap">
+              <div class="section-title">
+                <span>Placement Metrics & Verification</span>
+              </div>
+              <div class="badge-status in-progress">Supabase Live</div>
+            </div>
+            <div style="font-size:0.84rem; color:var(--ink-secondary); margin-bottom:1rem;">
+              Direct PostgreSQL 17 verification metrics synchronized with Project PSS.
+            </div>
+
+            <!-- DSA Solved Row -->
+            <div class="profile-metric-row">
+              <div class="profile-metric-left">
+                <div class="profile-metric-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                </div>
+                <div>
+                  <div class="profile-metric-name">Data Structures & Algorithms</div>
+                  <div class="profile-metric-sub">Target: ${targetDsa} Problems (${dsaPct}% achieved)</div>
+                </div>
+              </div>
+              <div style="display:flex; align-items:center; gap:0.6rem;">
+                <div class="profile-metric-val">${dsaSolved} <span>/ ${targetDsa}</span></div>
+                <button class="btn-subtle" id="profDsaPlusBtn" title="Log +1 DSA problem solved" style="padding:0.25rem 0.6rem; font-weight:700;">+1</button>
+              </div>
+            </div>
+
+            <!-- SQL Solved Row -->
+            <div class="profile-metric-row">
+              <div class="profile-metric-left">
+                <div class="profile-metric-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+                </div>
+                <div>
+                  <div class="profile-metric-name">SQL & Relational Queries</div>
+                  <div class="profile-metric-sub">Target: ${targetSql} Queries (${sqlPct}% achieved)</div>
+                </div>
+              </div>
+              <div style="display:flex; align-items:center; gap:0.6rem;">
+                <div class="profile-metric-val">${sqlSolved} <span>/ ${targetSql}</span></div>
+                <button class="btn-subtle" id="profSqlPlusBtn" title="Log +1 SQL query solved" style="padding:0.25rem 0.6rem; font-weight:700;">+1</button>
+              </div>
+            </div>
+
+            <!-- Internships Row -->
+            <div class="profile-metric-row">
+              <div class="profile-metric-left">
+                <div class="profile-metric-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                </div>
+                <div>
+                  <div class="profile-metric-name">Industry Internships</div>
+                  <div class="profile-metric-sub">Target: ${targetIntern} Completed</div>
+                </div>
+              </div>
+              <div class="profile-metric-val">${internDone} <span>/ ${targetIntern}</span></div>
+            </div>
+
+            <!-- Certifications Row -->
+            <div class="profile-metric-row">
+              <div class="profile-metric-left">
+                <div class="profile-metric-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+                </div>
+                <div>
+                  <div class="profile-metric-name">Technical Certifications</div>
+                  <div class="profile-metric-sub">Target: ${targetCert} Certifications</div>
+                </div>
+              </div>
+              <div class="profile-metric-val">${certDone} <span>/ ${targetCert}</span></div>
+            </div>
+
+            <div style="margin-top:1.2rem; padding:0.9rem 1rem; background:var(--bg); border:1px solid var(--line); border-radius:12px; display:flex; align-items:center; justify-content:space-between;">
+              <span style="font-size:0.84rem; font-weight:600; color:var(--ink-secondary);">Composite Readiness Index</span>
+              <span style="font-size:1.1rem; font-weight:800; color:var(--dark);">${readinessIndex}%</span>
+            </div>
+          </div>
+
+          <!-- Card 2: Academic & Candidate Credentials -->
+          <div class="card">
+            <div class="section-title-wrap">
+              <div class="section-title">
+                <span>Academic & Career Blueprint</span>
+              </div>
+            </div>
+            <div style="font-size:0.84rem; color:var(--ink-secondary); margin-bottom:0.75rem;">
+              Formal degree structure and target corporate placement specifications.
+            </div>
+
+            <div class="profile-info-grid">
+              <div class="profile-info-tile">
+                <div class="lbl">Candidate Name</div>
+                <div class="val">${name}</div>
+              </div>
+              <div class="profile-info-tile">
+                <div class="lbl">Program / Degree</div>
+                <div class="val">BCA</div>
+              </div>
+              <div class="profile-info-tile">
+                <div class="lbl">Specialization</div>
+                <div class="val">Data Science & AI-ML</div>
+              </div>
+              <div class="profile-info-tile">
+                <div class="lbl">Current Progression</div>
+                <div class="val">Semester ${currentSem} of 6</div>
+              </div>
+              <div class="profile-info-tile">
+                <div class="lbl">Target Compensation</div>
+                <div class="val">₹12–25 LPA (Tier 1)</div>
+              </div>
+              <div class="profile-info-tile">
+                <div class="lbl">Primary Role Focus</div>
+                <div class="val">SDE-1 / Software Eng</div>
+              </div>
+            </div>
+
+            <div style="margin-top:1.2rem;">
+              <div style="font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-muted); margin-bottom:0.6rem;">
+                Target Corporate Placement Tiers
+              </div>
+              <div style="display:flex; flex-direction:column; gap:0.5rem; font-size:0.84rem;">
+                <div style="display:flex; justify-content:space-between; padding:0.55rem 0.8rem; background:var(--bg); border:1px solid var(--line); border-radius:8px;">
+                  <span style="font-weight:600; color:var(--ink-primary);">Tier 1: Global Tech & Unicorns</span>
+                  <span style="color:var(--ink-secondary); font-weight:600;">₹18–35 LPA</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; padding:0.55rem 0.8rem; background:var(--bg); border:1px solid var(--line); border-radius:8px;">
+                  <span style="font-weight:600; color:var(--ink-primary);">Tier 2: High-Growth Product Firms</span>
+                  <span style="color:var(--ink-secondary); font-weight:600;">₹12–18 LPA</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; padding:0.55rem 0.8rem; background:var(--bg); border:1px solid var(--line); border-radius:8px;">
+                  <span style="font-weight:600; color:var(--ink-primary);">Tier 3: Digital Enterprise Labs</span>
+                  <span style="color:var(--ink-secondary); font-weight:600;">₹7–10 LPA</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 3: Core Competencies & Tech Stack -->
+          <div class="card">
+            <div class="section-title-wrap">
+              <div class="section-title">
+                <span>Core Technical Stack & Tools</span>
+              </div>
+            </div>
+            <div style="font-size:0.84rem; color:var(--ink-secondary); margin-bottom:1rem;">
+              Production toolchain and verified systems engineering capabilities.
+            </div>
+
+            <div style="display:flex; flex-wrap:wrap; gap:0.5rem; margin-bottom:1.25rem;">
+              <span class="stack-pill" style="font-weight:600; padding:0.3rem 0.7rem; font-size:0.82rem;">Python</span>
+              <span class="stack-pill" style="font-weight:600; padding:0.3rem 0.7rem; font-size:0.82rem;">C++ (DSA)</span>
+              <span class="stack-pill" style="font-weight:600; padding:0.3rem 0.7rem; font-size:0.82rem;">TypeScript</span>
+              <span class="stack-pill" style="font-weight:600; padding:0.3rem 0.7rem; font-size:0.82rem;">React / Next.js</span>
+              <span class="stack-pill" style="font-weight:600; padding:0.3rem 0.7rem; font-size:0.82rem;">Node.js / Express</span>
+              <span class="stack-pill" style="font-weight:600; padding:0.3rem 0.7rem; font-size:0.82rem;">PostgreSQL (v17)</span>
+              <span class="stack-pill" style="font-weight:600; padding:0.3rem 0.7rem; font-size:0.82rem;">Supabase Cloud</span>
+              <span class="stack-pill" style="font-weight:600; padding:0.3rem 0.7rem; font-size:0.82rem;">Docker</span>
+              <span class="stack-pill" style="font-weight:600; padding:0.3rem 0.7rem; font-size:0.82rem;">Git / GitHub</span>
+              <span class="stack-pill" style="font-weight:600; padding:0.3rem 0.7rem; font-size:0.82rem;">REST APIs</span>
+            </div>
+
+            <div style="font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-muted); margin-bottom:0.6rem;">
+              Production Architecture Projects
+            </div>
+            <div style="display:flex; flex-direction:column; gap:0.5rem;">
+              ${PROJECTS_DATA.map((p, idx) => `
+                <div style="display:flex; align-items:center; justify-content:space-between; padding:0.6rem 0.8rem; background:var(--bg); border:1px solid var(--line); border-radius:8px; font-size:0.84rem;">
+                  <span style="font-weight:600; color:var(--ink-primary);">#${idx + 1} ${p.title}</span>
+                  <span class="badge-status ${idx === 0 ? 'in-progress' : 'planned'}">${idx === 0 ? 'Active Build' : 'Upcoming'}</span>
+                </div>
+              `).join("")}
+            </div>
+          </div>
+
+          <!-- Card 4: Professional Handles & Cloud Persistence -->
+          <div class="card">
+            <div class="section-title-wrap">
+              <div class="section-title">
+                <span>Profiles, Repositories & Cloud Sync</span>
+              </div>
+            </div>
+            <div style="font-size:0.84rem; color:var(--ink-secondary); margin-bottom:1rem;">
+              External candidate handles and live Supabase Cloud configuration.
+            </div>
+
+            <div class="profile-links-list">
+              <a href="https://github.com/samarraj" target="_blank" rel="noopener" class="profile-link-btn">
+                <div style="display:flex; align-items:center; gap:0.65rem;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+                  <span>GitHub Profile</span>
+                </div>
+                <span style="font-size:0.78rem; color:var(--ink-muted);">github.com/samarraj ↗</span>
+              </a>
+
+              <a href="https://linkedin.com/in/samarraj" target="_blank" rel="noopener" class="profile-link-btn">
+                <div style="display:flex; align-items:center; gap:0.65rem;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+                  <span>LinkedIn Professional Network</span>
+                </div>
+                <span style="font-size:0.78rem; color:var(--ink-muted);">linkedin.com/in/samarraj ↗</span>
+              </a>
+
+              <a href="https://leetcode.com/samarrajxyz" target="_blank" rel="noopener" class="profile-link-btn">
+                <div style="display:flex; align-items:center; gap:0.65rem;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                  <span>LeetCode Competitive Handle</span>
+                </div>
+                <span style="font-size:0.78rem; color:var(--ink-muted);">samarrajxyz ↗</span>
+              </a>
+            </div>
+
+            <div style="margin-top:1.25rem; padding:1rem; background:var(--bg); border:1px solid var(--line); border-radius:12px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.5rem;">
+                <span style="font-size:0.8rem; font-weight:700; color:var(--ink-primary);">Supabase Cloud Database</span>
+                <span class="badge-status completed">Online · PSS</span>
+              </div>
+              <div style="font-size:0.76rem; color:var(--ink-secondary); line-height:1.4;">
+                Host: <code>sesshjrjyscnnjufypdf.supabase.co</code><br>
+                Replication: PostgreSQL 17 REST API (Zero LocalStorage)
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    this.dom.mainContainer.innerHTML = html;
+    this.bindProfileEvents();
+  }
+
+  bindProfileEvents() {
+    document.getElementById("editProfileBtn")?.addEventListener("click", () => {
+      this.openEditProfileModal();
+    });
+
+    document.getElementById("profileViewTargetsBtn")?.addEventListener("click", () => {
+      this.switchView("targets");
+    });
+
+    document.getElementById("profDsaPlusBtn")?.addEventListener("click", async () => {
+      this.profile.dsa_solved = (this.profile.dsa_solved || 0) + 1;
+      this.render();
+      if (this.profile && this.profile.id) {
+        await db.updateProfile(this.profile.id, { dsa_solved: this.profile.dsa_solved });
+      }
+      this.showToast("Logged +1 DSA: " + this.profile.dsa_solved + " solved");
+    });
+
+    document.getElementById("profSqlPlusBtn")?.addEventListener("click", async () => {
+      this.profile.sql_solved = (this.profile.sql_solved || 0) + 1;
+      this.render();
+      if (this.profile && this.profile.id) {
+        await db.updateProfile(this.profile.id, { sql_solved: this.profile.sql_solved });
+      }
+      this.showToast("Logged +1 SQL: " + this.profile.sql_solved + " solved");
+    });
+  }
+
+  openEditProfileModal() {
+    const modal = document.getElementById("editProfileModal");
+    if (!modal) return;
+    
+    const nameInput = document.getElementById("profileCandidateName");
+    const degInput = document.getElementById("profileDegree");
+    const semInput = document.getElementById("profileCurrentSem");
+    const dsaInput = document.getElementById("profileTargetDsa");
+    const sqlInput = document.getElementById("profileTargetSql");
+    const internInput = document.getElementById("profileTargetInternships");
+    const certInput = document.getElementById("profileTargetCerts");
+
+    if (nameInput) nameInput.value = this.profile?.candidate_name || "Samar Raj";
+    if (degInput) degInput.value = this.profile?.degree || "BCA (Data Science / AI-ML)";
+    if (semInput) semInput.value = this.profile?.current_semester || 3;
+    if (dsaInput) dsaInput.value = this.profile?.target_dsa || 150;
+    if (sqlInput) sqlInput.value = this.profile?.target_sql || 150;
+    if (internInput) internInput.value = this.profile?.target_internships || 2;
+    if (certInput) certInput.value = this.profile?.target_certifications || 4;
+
+    modal.classList.add("open");
+  }
+
+  closeEditProfileModal() {
+    document.getElementById("editProfileModal")?.classList.remove("open");
+  }
+
+  async handleEditProfileSubmit() {
+    const name = document.getElementById("profileCandidateName").value.trim();
+    const degree = document.getElementById("profileDegree").value.trim();
+    const current_semester = parseInt(document.getElementById("profileCurrentSem").value, 10) || 3;
+    const target_dsa = parseInt(document.getElementById("profileTargetDsa").value, 10) || 150;
+    const target_sql = parseInt(document.getElementById("profileTargetSql").value, 10) || 150;
+    const target_internships = parseInt(document.getElementById("profileTargetInternships").value, 10) || 2;
+    const target_certifications = parseInt(document.getElementById("profileTargetCerts").value, 10) || 4;
+
+    const fields = {
+      candidate_name: name,
+      degree: degree,
+      current_semester,
+      target_dsa,
+      target_sql,
+      target_internships,
+      target_certifications
+    };
+
+    this.closeEditProfileModal();
+    this.setSyncStatus("syncing", "Updating profile in Supabase...");
+
+    try {
+      if (this.profile && this.profile.id) {
+        await db.updateProfile(this.profile.id, fields);
+      }
+      this.profile = { ...this.profile, ...fields };
+      
+      const nameEl = document.getElementById("userProfileName");
+      if (nameEl) nameEl.textContent = name.split(" ")[0];
+      const popNameEl = document.getElementById("popoverUserName");
+      if (popNameEl) popNameEl.textContent = name;
+      const popRoleEl = document.getElementById("popoverUserRole");
+      if (popRoleEl) popRoleEl.textContent = degree;
+
+      this.setSyncStatus("connected", "Supabase Cloud: PSS (Profile Saved)");
+      this.showToast("Candidate profile saved to Supabase Cloud");
+      this.render();
+    } catch (err) {
+      this.setSyncStatus("error", "Failed to update profile");
+      this.showToast("Error updating profile in Supabase", true);
+    }
   }
 
   /* ==========================================================================

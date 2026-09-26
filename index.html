@@ -56,7 +56,9 @@
       <!-- Center: Raycast / Linear Command Palette Trigger -->
       <div class="topbar-center">
         <button class="command-trigger" id="openCommandPaletteBtn" title="Quick jump or command (⌘K / Ctrl+K)">
-          <span class="cmd-icon">⌘</span>
+          <span class="cmd-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </span>
           <span class="cmd-text">Quick jump to view or action...</span>
           <kbd class="cmd-badge">⌘K</kbd>
         </button>
@@ -65,12 +67,16 @@
       <!-- Right: Action Buttons + Theme Toggle + User Menu -->
       <div class="topbar-right">
         <button class="btn-primary-slim" id="openAddTaskBtn" title="Add a custom placement goal">
-          <span class="plus-icon">＋</span>
+          <span class="plus-icon">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </span>
           <span>Goal</span>
         </button>
 
         <button class="icon-btn-minimal" id="themeToggleBtn" aria-label="Toggle dark/light theme" title="Toggle theme">
-          <span id="themeToggleIcon">🌙</span>
+          <span id="themeToggleIcon" class="theme-icon-wrap">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </span>
         </button>
 
         <!-- User Profile Dropdown Pill -->
@@ -78,30 +84,51 @@
           <button class="user-chip" id="userMenuToggleBtn" aria-expanded="false" title="Candidate profile & options">
             <div class="user-avatar-dot">SR</div>
             <span class="user-name" id="userProfileName">Samar</span>
-            <span class="user-caret">▾</span>
+            <span class="user-caret">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </span>
           </button>
 
           <div class="user-dropdown-popover" id="userDropdownMenu">
-            <div class="popover-profile">
-              <div class="popover-name">Samar Raj</div>
-              <div class="popover-role">BCA · Data Science / AI-ML</div>
+            <div class="popover-profile" id="popoverHeaderProfile" role="button" tabindex="0" title="Click to view candidate profile">
+              <div class="popover-profile-header">
+                <div class="user-avatar-dot">SR</div>
+                <div>
+                  <div class="popover-name" id="popoverUserName">Samar Raj</div>
+                  <div class="popover-role" id="popoverUserRole">BCA · Data Science / AI-ML</div>
+                </div>
+              </div>
             </div>
             <div class="popover-divider"></div>
+            <button class="popover-item" data-nav-view="profile">
+              <span class="item-icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              </span>
+              <span>Candidate Profile</span>
+            </button>
             <button class="popover-item" data-nav-view="targets">
-              <span class="item-icon">🎯</span>
+              <span class="item-icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+              </span>
               <span>Placement Targets</span>
             </button>
             <button class="popover-item" data-nav-view="analytics">
-              <span class="item-icon">📈</span>
+              <span class="item-icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+              </span>
               <span>Learning Velocity</span>
             </button>
             <button class="popover-item" data-nav-view="export">
-              <span class="item-icon">📥</span>
+              <span class="item-icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              </span>
               <span>Export & Backup</span>
             </button>
             <div class="popover-divider"></div>
             <button class="popover-item danger" id="signOutBtn">
-              <span class="item-icon">🚪</span>
+              <span class="item-icon">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              </span>
               <span>Sign Out</span>
             </button>
           </div>
@@ -115,27 +142,39 @@
       <aside class="app-sidebar floating-rail">
         <div class="rail-nav-group">
           <button class="rail-btn active" data-nav-view="dashboard" title="Dashboard">
-            <span class="rail-icon">📊</span>
+            <span class="rail-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            </span>
             <span class="rail-label">Home</span>
           </button>
           <button class="rail-btn" data-nav-view="roadmap" title="Curriculum Roadmap">
-            <span class="rail-icon">🗺️</span>
+            <span class="rail-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+            </span>
             <span class="rail-label">Roadmap</span>
           </button>
           <button class="rail-btn" data-nav-view="skills" title="Skills Matrix">
-            <span class="rail-icon">⚡</span>
+            <span class="rail-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </span>
             <span class="rail-label">Skills</span>
           </button>
           <button class="rail-btn" data-nav-view="projects" title="Portfolio Projects">
-            <span class="rail-icon">🚀</span>
+            <span class="rail-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+            </span>
             <span class="rail-label">Projects</span>
           </button>
           <button class="rail-btn" data-nav-view="practice" title="DSA & SQL Practice">
-            <span class="rail-icon">💻</span>
+            <span class="rail-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </span>
             <span class="rail-label">Practice</span>
           </button>
           <button class="rail-btn" data-nav-view="career" title="Career Applications CRM">
-            <span class="rail-icon">💼</span>
+            <span class="rail-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+            </span>
             <span class="rail-label">Career</span>
           </button>
         </div>
@@ -144,20 +183,34 @@
 
         <div class="rail-nav-group">
           <button class="rail-btn" data-nav-view="analytics" title="Learning Analytics">
-            <span class="rail-icon">📈</span>
+            <span class="rail-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            </span>
             <span class="rail-label">Analytics</span>
           </button>
           <button class="rail-btn" data-nav-view="rhythm" title="Weekly Rhythm">
-            <span class="rail-icon">📅</span>
+            <span class="rail-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </span>
             <span class="rail-label">Rhythm</span>
           </button>
           <button class="rail-btn" data-nav-view="targets" title="Placement Targets">
-            <span class="rail-icon">🎯</span>
+            <span class="rail-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+            </span>
             <span class="rail-label">Targets</span>
           </button>
           <button class="rail-btn" data-nav-view="export" title="Backup & Export">
-            <span class="rail-icon">📥</span>
+            <span class="rail-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            </span>
             <span class="rail-label">Export</span>
+          </button>
+          <button class="rail-btn" data-nav-view="profile" title="Candidate Profile">
+            <span class="rail-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </span>
+            <span class="rail-label">Profile</span>
           </button>
         </div>
 
@@ -179,24 +232,34 @@
     <!-- Mobile Sticky Bottom Navigation -->
     <nav class="mobile-bottom-bar" aria-label="Mobile Navigation">
       <button class="mobile-nav-item active" data-nav-view="dashboard">
-        <span class="icon">📊</span>
+        <span class="icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </span>
         <span>Home</span>
       </button>
       <button class="mobile-nav-item" data-nav-view="roadmap">
-        <span class="icon">🗺️</span>
+        <span class="icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>
+        </span>
         <span>Roadmap</span>
       </button>
       <button class="mobile-nav-item" data-nav-view="skills">
-        <span class="icon">⚡</span>
+        <span class="icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </span>
         <span>Skills</span>
       </button>
-      <button class="mobile-nav-item" data-nav-view="projects">
-        <span class="icon">🚀</span>
-        <span>Projects</span>
-      </button>
       <button class="mobile-nav-item" data-nav-view="career">
-        <span class="icon">💼</span>
+        <span class="icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+        </span>
         <span>Career</span>
+      </button>
+      <button class="mobile-nav-item" data-nav-view="profile">
+        <span class="icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </span>
+        <span>Profile</span>
       </button>
     </nav>
 
@@ -285,6 +348,61 @@
     </div>
   </div>
 
+  <!-- Modal: Edit Profile -->
+  <div class="modal-backdrop" id="editProfileModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Edit Candidate Profile</h3>
+        <button class="icon-btn" id="closeProfileModalBtn" style="border:none; width:30px; height:30px;">✕</button>
+      </div>
+      <form id="editProfileForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="profileCandidateName">Candidate Full Name</label>
+            <input type="text" class="form-input" id="profileCandidateName" required>
+          </div>
+          <div class="form-group">
+            <label for="profileDegree">Degree & Specialization</label>
+            <input type="text" class="form-input" id="profileDegree" required>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.75rem;">
+            <div class="form-group">
+              <label for="profileCurrentSem">Current Semester</label>
+              <select class="form-select" id="profileCurrentSem">
+                <option value="3">Semester 3</option>
+                <option value="4">Semester 4</option>
+                <option value="5">Semester 5</option>
+                <option value="6">Semester 6</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="profileTargetDsa">Target DSA Solved</label>
+              <input type="number" class="form-input" id="profileTargetDsa" min="1" max="1000">
+            </div>
+          </div>
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.75rem;">
+            <div class="form-group">
+              <label for="profileTargetSql">Target SQL Solved</label>
+              <input type="number" class="form-input" id="profileTargetSql" min="1" max="500">
+            </div>
+            <div class="form-group">
+              <label for="profileTargetInternships">Target Internships</label>
+              <input type="number" class="form-input" id="profileTargetInternships" min="0" max="10">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="profileTargetCerts">Target Certifications</label>
+            <input type="number" class="form-input" id="profileTargetCerts" min="0" max="10">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn-outline" id="cancelProfileModalBtn">Cancel</button>
+          <button type="submit" class="btn-primary" id="saveProfileBtn">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Authentication / Login Screen Gate -->
   <div class="auth-wrapper" id="authWrapper" style="display: none;">
     <div class="auth-card">
@@ -295,7 +413,8 @@
       </div>
 
       <div class="auth-error-banner" id="authErrorBanner">
-        <span>⚠️</span> <span id="authErrorMsg">Invalid email or password</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span id="authErrorMsg">Invalid email or password</span>
       </div>
 
       <form class="auth-form" id="loginForm">
@@ -310,7 +429,9 @@
           <label for="loginPassword">Access Password</label>
           <div class="auth-input-wrapper">
             <input type="password" id="loginPassword" class="auth-input" placeholder="Enter your password" required autocomplete="current-password">
-            <button type="button" class="auth-pwd-toggle" id="togglePwdBtn" title="Show/Hide password">👁️</button>
+            <button type="button" class="auth-pwd-toggle" id="togglePwdBtn" title="Show/Hide password">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
           </div>
         </div>
 
