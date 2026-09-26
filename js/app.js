@@ -1159,8 +1159,8 @@ class PlacementOSApp {
                 ${WEEKLY_RHYTHM.map((row, idx) => {
                   const isToday = idx === (dayIdx === 0 ? 6 : dayIdx - 1);
                   return `
-                    <tr style="border-bottom:1px solid var(--line); ${isToday ? 'background:var(--accent-green-soft); font-weight:600;' : ''}">
-                      <td style="padding:0.4rem 0.5rem; color:${isToday ? 'var(--accent-green)' : 'var(--ink-primary)'}; width:75px;">${row.day.slice(0,3)}</td>
+                    <tr style="border-bottom:1px solid var(--line); ${isToday ? 'background:var(--mint); font-weight:600;' : ''}">
+                      <td style="padding:0.4rem 0.5rem; color:${isToday ? 'var(--dark)' : 'var(--ink-primary)'}; width:75px;">${row.day.slice(0,3)}</td>
                       <td style="padding:0.4rem 0.5rem;">${row.tasks}</td>
                     </tr>
                   `;
@@ -1207,7 +1207,7 @@ class PlacementOSApp {
           <div class="focus-checkbox-circle"></div>
           <div class="focus-task-content">
             <div class="focus-task-header">
-              <span class="focus-task-tag" style="background:var(--accent-green-soft); color:var(--accent-green);">${dt.task_tag || 'Custom'}</span>
+              <span class="focus-task-tag" style="background:var(--mint); color:var(--dark);">${dt.task_tag || 'Custom'}</span>
             </div>
             <div class="focus-task-text">${dt.task_text}</div>
           </div>
@@ -1403,7 +1403,7 @@ class PlacementOSApp {
                   <b>Sem ${s.sem}</b>
                   <span>${s.range}</span>
                 </div>
-                <div class="sem-pill-pct" style="${isActive ? 'color:var(--accent-blue);' : ''}">${stat.pct}%</div>
+                <div class="sem-pill-pct">${stat.pct}%</div>
               </button>
             `;
           }).join("")}
@@ -1576,7 +1576,7 @@ class PlacementOSApp {
           <div class="section-title">
             <span>🚀</span> ${projSec.label}
           </div>
-          <div style="font-weight:700; color:var(--accent-green);">${pct}%</div>
+          <div style="font-weight:700; color:var(--dark);">${pct}%</div>
         </div>
         <div style="font-size:0.84rem; color:var(--ink-secondary); margin-bottom:0.85rem;">
           ${projSec.items.length} key engineering checkpoints required for portfolio readiness.
@@ -1605,7 +1605,7 @@ class PlacementOSApp {
         <ul style="list-style:none; display:flex; flex-direction:column; gap:0.6rem; font-size:0.84rem;">
           ${courseSec.items.map(c => `
             <li style="display:flex; align-items:flex-start; gap:0.5rem; color:var(--ink-secondary);">
-              <span style="color:var(--accent-blue);">▪</span>
+              <span style="color:var(--dark);">▪</span>
               <span>${c}</span>
             </li>
           `).join("")}
@@ -2320,7 +2320,7 @@ class PlacementOSApp {
               ${WEEKLY_RHYTHM.map(r => `
                 <tr style="border-bottom:1px solid var(--line);">
                   <td style="padding:0.85rem 0.75rem; font-weight:600; color:var(--ink-primary); width:120px;">${r.day}</td>
-                  <td style="padding:0.85rem 0.75rem; color:var(--accent-blue); font-weight:500;">${r.tasks}</td>
+                  <td style="padding:0.85rem 0.75rem; color:var(--dark); font-weight:600;">${r.tasks}</td>
                   <td style="padding:0.85rem 0.75rem; color:var(--ink-secondary);">${r.focus}</td>
                 </tr>
               `).join("")}
