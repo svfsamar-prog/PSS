@@ -34,8 +34,8 @@ export const OWNER = {
   targetBatch: "Target Batch 2026",
   currentSemester: 3,
   totalSemesters: 6,
-  avatarPath: "assets/profile-photo.jpg",
-  resumeUrl: "assets/Samar_Raj_Resume.pdf",
+  avatarPath: "assets/profile-photo.png",
+  resumeUrl: "assets/resume.pdf",
   targetRole: "SDE-1 / Software Engineer / AI-ML Systems",
   targetCompensation: "₹12–25 LPA (Tier 1 Global Tech)",
   
