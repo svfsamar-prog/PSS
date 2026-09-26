@@ -410,7 +410,7 @@
   </div>
 
   <!-- Authentication / Login Screen Gate (Light Water-Morphic) -->
-  <div class="auth-wrapper" id="authWrapper" style="display: none;">
+  <div class="auth-wrapper" id="authWrapper">
     <!-- Ambient Slow-Drifting Orbs (Mint / Primary-Green / Lime) -->
     <div class="auth-ambient-blobs" aria-hidden="true">
       <div class="auth-orb auth-orb-1"></div>
@@ -454,6 +454,15 @@
         <button type="submit" class="auth-submit-btn" id="loginSubmitBtn">
           <span id="authSubmitText">Sign In to Samar's Career OS</span> <span>→</span>
         </button>
+
+        <div class="auth-guest-options" style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.6rem;">
+          <button type="button" class="btn-outline" id="guestPreviewBtn" style="width: 100%; border-radius: 12px; font-weight: 600; font-size: 0.84rem; padding: 0.65rem; background: var(--bg); border: 1px solid var(--line); color: var(--dark); cursor: pointer;">
+            <span>Preview Dashboard (Guest / Read-Only)</span> <span>→</span>
+          </button>
+          <a href="public-profile.html" class="auth-recruiter-link" style="font-size: 0.82rem; color: #2563EB; text-decoration: none; font-weight: 600; text-align: center; margin-top: 0.2rem;">
+            <span>Recruiter Scan? Explore Public Profile ↗</span>
+          </a>
+        </div>
       </form>
 
       <div class="auth-footer">

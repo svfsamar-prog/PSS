@@ -86,6 +86,9 @@ class PlacementOSApp {
     const session = db.getSession();
     const authWrapper = document.getElementById("authWrapper");
 
+    // Always fetch and render dashboard data so the page content is never empty
+    this.loadFromSupabase();
+
     if (!session) {
       if (authWrapper) authWrapper.style.display = "flex";
       this.bindAuthEvents();
@@ -94,7 +97,6 @@ class PlacementOSApp {
       const user = db.getUser();
       const profileName = document.getElementById("userProfileName");
       if (profileName) profileName.textContent = user?.email ? user.email.split("@")[0] : OWNER.shortName;
-      this.loadFromSupabase();
     }
   }
 
@@ -107,6 +109,21 @@ class PlacementOSApp {
     const pwdInput = document.getElementById("loginPassword");
     const emailInput = document.getElementById("loginEmail");
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // Guest preview button handler (lets visitors & recruiters explore without credentials)
+    document.getElementById("guestPreviewBtn")?.addEventListener("click", () => {
+      const authWrapper = document.getElementById("authWrapper");
+      if (authWrapper) authWrapper.style.display = "none";
+      this.showToast("Browsing dashboard in Guest Mode (Read-Only)");
+    });
+
+    // Re-open login if user clicks Sign In when unauthenticated
+    document.getElementById("userMenuToggleBtn")?.addEventListener("click", () => {
+      if (!db.getSession()) {
+        const authWrapper = document.getElementById("authWrapper");
+        if (authWrapper) authWrapper.style.display = "flex";
+      }
+    });
 
     // Asymmetric droplet wobble and coordinate ripple on press
     submitBtn?.addEventListener("pointerdown", (e) => {
@@ -2828,7 +2845,7 @@ class PlacementOSApp {
               Production Architecture Projects
             </div>
             <div style="display:flex; flex-direction:column; gap:0.5rem;">
-              ${PROJECTS_DATA.map((p, idx) => `
+              ${(OWNER.projects || []).map((p, idx) => `
                 <div style="display:flex; align-items:center; justify-content:space-between; padding:0.6rem 0.8rem; background:var(--bg); border:1px solid var(--line); border-radius:8px; font-size:0.84rem;">
                   <span style="font-weight:600; color:var(--ink-primary);">#${idx + 1} ${p.title}</span>
                   <span class="badge-status ${idx === 0 ? 'in-progress' : 'planned'}">${idx === 0 ? 'Active Build' : 'Upcoming'}</span>
@@ -3111,7 +3128,14 @@ class PlacementOSApp {
   }
 }
 
-// Initialize on DOM Ready
-document.addEventListener("DOMContentLoaded", () => {
-  new PlacementOSApp();
-});
+// Initialize Application (Safe for deferred ES Modules where DOMContentLoaded may have already fired)
+function bootApp() {
+  if (window.__placementAppInstance) return;
+  window.__placementAppInstance = new PlacementOSApp();
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", bootApp);
+} else {
+  bootApp();
+}

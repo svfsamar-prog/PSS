@@ -899,7 +899,7 @@
   <script type="module">
     import { OWNER } from "./js/profile-config.js";
 
-    document.addEventListener("DOMContentLoaded", () => {
+    function hydrateProfile() {
       // 1. Hero Data
       document.getElementById("heroName").textContent = OWNER.name;
       document.getElementById("heroHeadline").textContent = OWNER.headline || OWNER.tagline;
@@ -1005,7 +1005,13 @@
           ` : ""}
         `;
       }
-    });
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", hydrateProfile);
+    } else {
+      hydrateProfile();
+    }
   </script>
 </body>
 </html>
