@@ -2254,7 +2254,7 @@ class PlacementOSApp {
           <div class="section-title">
             <span>💼</span> Placement Season Preparation Checklist
           </div>
-          <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:1rem; margin-top:0.8rem; font-size:0.86rem;">
+          <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:1rem; margin-top:0.8rem; font-size:0.86rem;">
             <div>
               <div style="font-weight:600; margin-bottom:0.35rem;">Resume & Presence</div>
               <ul style="list-style:none; display:flex; flex-direction:column; gap:0.35rem; color:var(--ink-secondary);">
@@ -2485,8 +2485,8 @@ class PlacementOSApp {
           </div>
         </div>
 
-        <div class="card">
-          <table style="width:100%; border-collapse:collapse; font-size:0.88rem;">
+        <div class="card targets-table-wrapper" style="overflow-x:auto; -webkit-overflow-scrolling:touch;">
+          <table style="width:100%; min-width:480px; border-collapse:collapse; font-size:0.88rem;">
             <thead>
               <tr style="border-bottom:2px solid var(--line); text-align:left; color:var(--ink-muted); font-size:0.72rem; text-transform:uppercase;">
                 <th style="padding:0.75rem;">Target Metric</th>
@@ -2505,6 +2505,7 @@ class PlacementOSApp {
             </tbody>
           </table>
         </div>
+
       </div>
     `;
 
